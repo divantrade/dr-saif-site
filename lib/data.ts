@@ -226,6 +226,8 @@ export async function getArticlesTree(): Promise<CategoryNode[]> {
     const children = byParent.get(parentId) ?? [];
     return children
       .slice()
+      // Hide empty categories from the nav — they produce dead links.
+      .filter((c) => c.count > 0)
       .sort((a, b) => b.count - a.count)
       .map((cat) => ({ category: cat, children: build(cat.id) }));
   };
