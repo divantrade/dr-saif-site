@@ -175,6 +175,6 @@ c18cd24 fix(about): align portrait to top so forehead and hair show fully
 - Next.js 16 docs داخل المشروع: `node_modules/next/dist/docs/`
 - سكريبت الترحيل: `scripts/migrate-to-sanity.ts`
 - دليل السكريبت: `scripts/README.md`
-- Sanity project dashboard: `https://sanity.io/organizations/oTf5E0V6b/project/qgv6yxcl`
+- Sanity project dashboard: `https://sanity.io/manage` (اختر المشروع من القائمة)
 
 آخر تحديث: 2026-04-12
