@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import type { CategoryNode } from "@/lib/types";
 import { categoryHref } from "@/lib/types";
+import SearchForm from "./SearchForm";
 import SocialLinks from "./SocialLinks";
 
 interface MobileNavProps {
@@ -61,6 +62,9 @@ export default function MobileNav({ articlesTree }: MobileNavProps) {
 
       {open && (
         <nav className="md:hidden border-t border-gray-100 py-3 max-h-[80vh] overflow-y-auto">
+          <div className="px-2 pb-3">
+            <SearchForm placeholder="ابحث…" />
+          </div>
           <Link
             href="/"
             onClick={close}

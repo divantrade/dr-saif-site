@@ -55,7 +55,16 @@ export async function getPostBySlug(
   slug: string
 ): Promise<WPPost | undefined> {
   const posts = await loadPosts();
-  return posts.find((p) => p.slug === slug);
+  // Next.js decodes URL-encoded slugs before handing them to us, while WP
+  // stores them URL-encoded with lowercase hex. Compare both forms.
+  const target = decodeURIComponent(slug);
+  const lower = slug.toLowerCase();
+  return posts.find(
+    (p) =>
+      p.slug === slug ||
+      p.slug.toLowerCase() === lower ||
+      decodeURIComponent(p.slug) === target
+  );
 }
 
 export async function getPaginatedPosts(
@@ -221,6 +230,114 @@ export async function getArticlesTree(): Promise<CategoryNode[]> {
       .map((cat) => ({ category: cat, children: build(cat.id) }));
   };
   return build(ARTICLES_ROOT_ID);
+}
+
+// ─── Tags ────────────────────────────────────────────────────────────────────
+
+export async function getTagBySlug(slug: string): Promise<WPTag | undefined> {
+  const tags = await loadTags();
+  const target = decodeURIComponent(slug);
+  const lower = slug.toLowerCase();
+  return tags.find(
+    (t) =>
+      t.slug === slug ||
+      t.slug.toLowerCase() === lower ||
+      decodeURIComponent(t.slug) === target
+  );
+}
+
+export async function getPostsByTagId(tagId: number): Promise<WPPost[]> {
+  const posts = await loadPosts();
+  return posts.filter((p) => p.tags.includes(tagId));
+}
+
+export async function getPaginatedPostsByTagId(
+  tagId: number,
+  page: number,
+  perPage: number = 12
+): Promise<{ posts: WPPost[]; totalPages: number; currentPage: number; total: number }> {
+  const all = await getPostsByTagId(tagId);
+  const totalPages = Math.max(1, Math.ceil(all.length / perPage));
+  const start = (page - 1) * perPage;
+  return {
+    posts: all.slice(start, start + perPage),
+    totalPages,
+    currentPage: page,
+    total: all.length,
+  };
+}
+
+// ─── Search & related ────────────────────────────────────────────────────────
+
+/** Normalize Arabic for search: remove diacritics, alef variants, etc. */
+function normalizeArabic(text: string): string {
+  return text
+    .normalize("NFKD")
+    .replace(/[\u064B-\u0652\u0670]/g, "") // tashkeel / diacritics
+    .replace(/[\u0622\u0623\u0625]/g, "\u0627") // alef variants -> ا
+    .replace(/\u0629/g, "\u0647") // ة -> ه
+    .replace(/\u0649/g, "\u064A") // ى -> ي
+    .replace(/[\u0640]/g, "") // tatweel (kashida)
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .trim();
+}
+
+export async function searchPosts(query: string, limit = 50): Promise<WPPost[]> {
+  const q = normalizeArabic(query);
+  if (!q) return [];
+  const posts = await loadPosts();
+  const results = posts
+    .map((p) => {
+      const title = normalizeArabic(stripTags(p.title.rendered));
+      const excerpt = normalizeArabic(stripTags(p.excerpt.rendered));
+      let score = 0;
+      if (title.includes(q)) score += 10;
+      if (excerpt.includes(q)) score += 3;
+      // word boundary bonus
+      const tokens = q.split(" ").filter(Boolean);
+      for (const t of tokens) {
+        if (title.includes(t)) score += 2;
+        if (excerpt.includes(t)) score += 1;
+      }
+      return { post: p, score };
+    })
+    .filter((r) => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, limit)
+    .map((r) => r.post);
+  return results;
+}
+
+function stripTags(html: string): string {
+  return html.replace(/<[^>]*>/g, " ");
+}
+
+/**
+ * Find posts related to the given one by shared categories/tags.
+ * Returns up to `limit` posts, ranked by overlap strength.
+ */
+export async function getRelatedPosts(
+  post: WPPost,
+  limit = 3
+): Promise<WPPost[]> {
+  const all = await loadPosts();
+  const catSet = new Set(post.categories);
+  const tagSet = new Set(post.tags);
+  return all
+    .filter((p) => p.id !== post.id)
+    .map((p) => {
+      const catOverlap = p.categories.filter((c) => catSet.has(c)).length;
+      const tagOverlap = p.tags.filter((t) => tagSet.has(t)).length;
+      return { p, score: catOverlap * 3 + tagOverlap };
+    })
+    .filter((r) => r.score > 0)
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return new Date(b.p.date).getTime() - new Date(a.p.date).getTime();
+    })
+    .slice(0, limit)
+    .map((r) => r.p);
 }
 
 // ─── Media ───────────────────────────────────────────────────────────────────

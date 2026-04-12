@@ -4,6 +4,20 @@ import MegaMenu from "./MegaMenu";
 import MobileNav from "./MobileNav";
 import SocialLinks from "./SocialLinks";
 
+function SearchIconLink() {
+  return (
+    <Link
+      href="/search"
+      aria-label="البحث"
+      className="p-2 text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+    >
+      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+    </Link>
+  );
+}
+
 const TOP_LEVEL_LINKS = [
   { href: "/podcast", label: "بودكاست" },
   { href: "/videos", label: "فيديوهاتنا" },
@@ -52,8 +66,10 @@ export default async function Header() {
             ))}
           </nav>
 
-          {/* Desktop social icons */}
-          <div className="hidden md:flex items-center">
+          {/* Desktop search + social icons */}
+          <div className="hidden md:flex items-center gap-1">
+            <SearchIconLink />
+            <div className="w-px h-5 bg-gray-200 mx-1" />
             <SocialLinks />
           </div>
 

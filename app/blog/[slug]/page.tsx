@@ -2,14 +2,18 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
+import PostCard from "@/components/PostCard";
 import {
   loadPosts,
   getPostBySlug,
   getMediaById,
   getCategoriesByIds,
   getTagsByIds,
+  getRelatedPosts,
+  categoryHref,
   formatDate,
   stripHtml,
+  readableSlug,
 } from "@/lib/data";
 
 // Generate all slugs at build time
@@ -49,8 +53,11 @@ export default async function PostPage({
   const media = post.featured_media
     ? await getMediaById(post.featured_media)
     : null;
-  const categories = await getCategoriesByIds(post.categories);
-  const tags = await getTagsByIds(post.tags);
+  const [categories, tags, related] = await Promise.all([
+    getCategoriesByIds(post.categories),
+    getTagsByIds(post.tags),
+    getRelatedPosts(post, 3),
+  ]);
 
   return (
     <article className="max-w-4xl mx-auto px-4 sm:px-6 py-10">
@@ -75,12 +82,13 @@ export default async function PostPage({
         {categories.length > 0 && (
           <div className="flex flex-wrap gap-2 mb-4">
             {categories.map((cat) => (
-              <span
+              <Link
                 key={cat.id}
-                className="text-xs font-medium text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full"
+                href={categoryHref(cat.slug)}
+                className="text-xs font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 px-3 py-1 rounded-full transition-colors"
               >
                 {cat.name}
-              </span>
+              </Link>
             ))}
           </div>
         )}
@@ -139,20 +147,31 @@ export default async function PostPage({
       {/* Tags */}
       {tags.length > 0 && (
         <div className="mt-10 pt-8 border-t border-gray-100">
-          <h3 className="text-sm font-semibold text-gray-500 mb-3">
-            الوسوم
-          </h3>
+          <h3 className="text-sm font-semibold text-gray-500 mb-3">الوسوم</h3>
           <div className="flex flex-wrap gap-2">
             {tags.map((tag) => (
-              <span
+              <Link
                 key={tag.id}
-                className="text-xs text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full hover:bg-gray-200 transition-colors"
+                href={`/tag/${encodeURIComponent(readableSlug(tag.slug))}`}
+                className="text-xs text-gray-500 bg-gray-100 hover:bg-emerald-50 hover:text-emerald-700 px-3 py-1.5 rounded-full transition-colors"
               >
                 #{tag.name}
-              </span>
+              </Link>
             ))}
           </div>
         </div>
+      )}
+
+      {/* Related posts */}
+      {related.length > 0 && (
+        <section className="mt-12 pt-8 border-t border-gray-100">
+          <h3 className="text-2xl font-bold text-gray-900 mb-6">مقالات ذات صلة</h3>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {related.map((rp) => (
+              <PostCard key={rp.id} post={rp} />
+            ))}
+          </div>
+        </section>
       )}
 
       {/* Back to blog */}
@@ -161,18 +180,8 @@ export default async function PostPage({
           href="/blog"
           className="inline-flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
         >
-          <svg
-            className="w-4 h-4"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M9 5l7 7-7 7"
-            />
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
           العودة للمدونة
         </Link>
