@@ -1,26 +1,39 @@
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 :root {
-  --background: #ffffff;
+  --background: #f9fafb;
   --foreground: #171717;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "IBM Plex Sans Arabic", "Segoe UI", Tahoma, Arial, sans-serif;
+}
+
+/* RTL prose adjustments */
+.prose blockquote {
+  border-right-width: 4px;
+  border-left-width: 0;
+}
+
+.prose {
+  direction: rtl;
+}
+
+/* WordPress content image handling */
+.prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+.prose figure {
+  margin-left: 0;
+  margin-right: 0;
 }
