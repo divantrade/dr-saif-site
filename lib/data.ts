@@ -1,65 +1,31 @@
+import "server-only";
 import fs from "fs/promises";
 import path from "path";
 
-// ─── Types ───────────────────────────────────────────────────────────────────
+// Re-export shared types and utilities so existing imports keep working.
+export {
+  readableSlug,
+  stripHtml,
+  formatDate,
+  categoryHref,
+} from "./types";
+export type {
+  WPPost,
+  WPPage,
+  WPCategory,
+  WPTag,
+  WPMedia,
+  CategoryNode,
+} from "./types";
 
-export interface WPPost {
-  id: number;
-  date: string;
-  date_gmt: string;
-  slug: string;
-  status: string;
-  link: string;
-  title: { rendered: string };
-  content: { rendered: string };
-  excerpt: { rendered: string };
-  author: number;
-  featured_media: number;
-  sticky: boolean;
-  categories: number[];
-  tags: number[];
-}
-
-export interface WPPage {
-  id: number;
-  date: string;
-  slug: string;
-  status: string;
-  title: { rendered: string };
-  content: { rendered: string };
-  excerpt: { rendered: string };
-  featured_media: number;
-}
-
-export interface WPCategory {
-  id: number;
-  count: number;
-  name: string;
-  slug: string;
-  parent: number;
-}
-
-export interface WPTag {
-  id: number;
-  count: number;
-  name: string;
-  slug: string;
-}
-
-export interface WPMedia {
-  id: number;
-  title: { rendered: string };
-  alt_text: string;
-  source_url: string;
-  media_details: {
-    width: number;
-    height: number;
-    sizes: Record<
-      string,
-      { source_url: string; width: number; height: number }
-    >;
-  };
-}
+import type {
+  WPPost,
+  WPPage,
+  WPCategory,
+  WPTag,
+  WPMedia,
+  CategoryNode,
+} from "./types";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -157,6 +123,96 @@ export async function getTagsByIds(ids: number[]): Promise<WPTag[]> {
   return tags.filter((t) => ids.includes(t.id));
 }
 
+// ─── Category tree helpers ───────────────────────────────────────────────────
+
+export async function getCategoryBySlug(
+  slug: string
+): Promise<WPCategory | undefined> {
+  const cats = await loadCategories();
+  const target = decodeURIComponent(slug);
+  return cats.find(
+    (c) => c.slug === slug || decodeURIComponent(c.slug) === target
+  );
+}
+
+export async function getChildCategories(
+  parentId: number
+): Promise<WPCategory[]> {
+  const cats = await loadCategories();
+  return cats.filter((c) => c.parent === parentId);
+}
+
+/** Recursively collect a category's id plus all descendant ids. */
+export async function getCategoryWithDescendantIds(
+  rootId: number
+): Promise<number[]> {
+  const cats = await loadCategories();
+  const collected = new Set<number>([rootId]);
+  const queue: number[] = [rootId];
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    for (const c of cats) {
+      if (c.parent === current && !collected.has(c.id)) {
+        collected.add(c.id);
+        queue.push(c.id);
+      }
+    }
+  }
+  return Array.from(collected);
+}
+
+/** Get posts that belong to a category or any of its descendants. */
+export async function getPostsByCategoryId(
+  categoryId: number
+): Promise<WPPost[]> {
+  const [posts, ids] = await Promise.all([
+    loadPosts(),
+    getCategoryWithDescendantIds(categoryId),
+  ]);
+  const idSet = new Set(ids);
+  return posts.filter((p) => p.categories.some((c) => idSet.has(c)));
+}
+
+export async function getPaginatedPostsByCategoryId(
+  categoryId: number,
+  page: number,
+  perPage: number = 12
+): Promise<{ posts: WPPost[]; totalPages: number; currentPage: number; total: number }> {
+  const all = await getPostsByCategoryId(categoryId);
+  const totalPages = Math.max(1, Math.ceil(all.length / perPage));
+  const start = (page - 1) * perPage;
+  return {
+    posts: all.slice(start, start + perPage),
+    totalPages,
+    currentPage: page,
+    total: all.length,
+  };
+}
+
+/**
+ * The main "Articles" hierarchy the site is organized around.
+ * Top level is "المقالات" (id=42), which has 6 children that form the header menu.
+ * Two of those children themselves have sub-categories.
+ */
+export const ARTICLES_ROOT_ID = 42;
+
+export async function getArticlesTree(): Promise<CategoryNode[]> {
+  const cats = await loadCategories();
+  const byParent = new Map<number, WPCategory[]>();
+  for (const c of cats) {
+    if (!byParent.has(c.parent)) byParent.set(c.parent, []);
+    byParent.get(c.parent)!.push(c);
+  }
+  const build = (parentId: number): CategoryNode[] => {
+    const children = byParent.get(parentId) ?? [];
+    return children
+      .slice()
+      .sort((a, b) => b.count - a.count)
+      .map((cat) => ({ category: cat, children: build(cat.id) }));
+  };
+  return build(ARTICLES_ROOT_ID);
+}
+
 // ─── Media ───────────────────────────────────────────────────────────────────
 
 let mediaCache: WPMedia[] | null = null;
@@ -172,27 +228,4 @@ export async function getMediaById(
 ): Promise<WPMedia | undefined> {
   const media = await loadMedia();
   return media.find((m) => m.id === id);
-}
-
-// ─── Utilities ───────────────────────────────────────────────────────────────
-
-export function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").trim();
-}
-
-export function formatDate(dateStr: string): string {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString("ar-EG", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  });
-}
-
-export function decodeSlug(slug: string): string {
-  try {
-    return decodeURIComponent(slug);
-  } catch {
-    return slug;
-  }
 }
