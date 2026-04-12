@@ -1,0 +1,65 @@
+# One-shot migration workflow: WordPress JSON → Sanity.
+#
+# Triggered manually from the GitHub Actions UI (Actions tab → this workflow
+# → "Run workflow"). Does NOT run on push; it's intentionally manual because
+# it writes to the live Sanity dataset.
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   - NEXT_PUBLIC_SANITY_PROJECT_ID   (Sanity project id, e.g. from sanity.io/manage)
+#   - SANITY_WRITE_TOKEN              (Editor-permission API token; revoke after use)
+#
+# Optional repository variables (same page, "Variables" tab):
+#   - NEXT_PUBLIC_SANITY_DATASET      (defaults to "production")
+#   - NEXT_PUBLIC_SANITY_API_VERSION  (defaults to "2026-04-12")
+
+name: Migrate posts to Sanity
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Migration mode"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run         # Parse + print plan, no writes. Safe first step.
+          - skip-images     # Full migration without uploading featured images.
+          - full            # Full migration including images. Takes several minutes.
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run migration (${{ github.event.inputs.mode }})
+        env:
+          NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+          NEXT_PUBLIC_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET || 'production' }}
+          NEXT_PUBLIC_SANITY_API_VERSION: ${{ vars.NEXT_PUBLIC_SANITY_API_VERSION || '2026-04-12' }}
+          SANITY_WRITE_TOKEN: ${{ secrets.SANITY_WRITE_TOKEN }}
+        run: |
+          case "${{ github.event.inputs.mode }}" in
+            dry-run)
+              npm run migrate:sanity:dry
+              ;;
+            skip-images)
+              npm run migrate:sanity -- --skip-images
+              ;;
+            full)
+              npm run migrate:sanity
+              ;;
+          esac
