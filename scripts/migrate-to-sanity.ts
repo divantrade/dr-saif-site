@@ -39,17 +39,12 @@ loadEnv({ path: ".env" });
 
 // ─── Config ────────────────────────────────────────────────────────────────
 
-const projectId = process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
-const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET;
-const apiVersion = process.env.NEXT_PUBLIC_SANITY_API_VERSION;
+const projectId =
+  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "qgv6yxcl";
+const dataset = process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+const apiVersion =
+  process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-04-12";
 const token = process.env.SANITY_WRITE_TOKEN;
-
-if (!projectId || !dataset || !apiVersion) {
-  console.error(
-    "\n❌ Missing Sanity configuration in .env.local. Required: NEXT_PUBLIC_SANITY_PROJECT_ID, NEXT_PUBLIC_SANITY_DATASET, NEXT_PUBLIC_SANITY_API_VERSION. See .env.example.\n"
-  );
-  process.exit(1);
-}
 
 if (!token) {
   console.error(
