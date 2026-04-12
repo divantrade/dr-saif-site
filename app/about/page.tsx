@@ -49,12 +49,12 @@ export default function AboutPage() {
           </nav>
 
           <div className="grid md:grid-cols-[auto_1fr] gap-8 items-center">
-            <div className="relative w-48 h-48 md:w-56 md:h-56 mx-auto md:mx-0 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl">
+            <div className="relative w-48 h-48 md:w-56 md:h-56 mx-auto md:mx-0 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl bg-emerald-900">
               <Image
                 src={PORTRAIT}
                 alt={PERSONAL.fullName}
                 fill
-                className="object-cover"
+                className="object-cover object-top scale-150 translate-y-4"
                 sizes="224px"
                 priority
               />

@@ -37,7 +37,7 @@ export default function PrintCVPage() {
                 src={PORTRAIT}
                 alt={PERSONAL.fullName}
                 fill
-                className="object-cover"
+                className="object-cover object-top scale-150 translate-y-2"
                 sizes="120px"
                 priority
               />
