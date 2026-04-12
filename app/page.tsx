@@ -22,10 +22,19 @@ const CAT_PROJECTS = 488; // مشروعات النهوض والتغيير
 // A handful of short epigraphs that rotate through the hero with each
 // render (or visit, via Next's ISR). Hand-picked to span different facets
 // of the intellectual project.
-const HERO_EPIGRAPHS = [
-  "المنظور الحضاري ليس زاوية نظر فرعية، بل هو الإطار الكلّي الذي يُعيد ترتيب السؤال قبل أن يجترح الجواب.",
-  "إن هذه الأمة تحتاج إلى عقل استراتيجي يجمع بين الإرادة والإدارة.",
-  "لا تنهض الأمم بالردّ على خصومها، بل بتجديد وعيها بذاتها.",
+const HERO_EPIGRAPHS: { text: string; source: string }[] = [
+  {
+    text: "المنظور الحضاري ليس زاوية نظر فرعية، بل هو الإطار الكلّي الذي يُعيد ترتيب السؤال قبل أن يجترح الجواب.",
+    source: "في المنظور الحضاري الإسلامي",
+  },
+  {
+    text: "إن هذه الأمة تحتاج إلى عقل استراتيجي يجمع بين الإرادة والإدارة.",
+    source: "عقل استراتيجي والتغير القادم",
+  },
+  {
+    text: "لا تنهض الأمم بالردّ على خصومها، بل بتجديد وعيها بذاتها.",
+    source: "مشاتل التغيير",
+  },
 ];
 
 export default async function HomePage() {
@@ -70,7 +79,7 @@ export default async function HomePage() {
 
   return (
     <>
-      <Hero stats={heroStats} epigraph={epigraph} />
+      <Hero stats={heroStats} epigraph={epigraph.text} epigraphSource={epigraph.source} />
 
       {/* Content verticals — distinguish articles, books, studies, projects */}
       <ContentVerticals
