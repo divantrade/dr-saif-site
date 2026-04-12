@@ -16,11 +16,18 @@ import {
   readableSlug,
 } from "@/lib/data";
 
-// Generate all slugs at build time
+// Generate all slugs at build time.
+// WordPress stores slugs URL-encoded with lowercase hex, but browsers that
+// see a decoded Arabic URL re-encode it with uppercase hex (e.g. someone
+// pasting a link or coming from a search engine). Hosting layers compare
+// URL paths as literal strings, so %d8 vs %D8 can cause a 404 against the
+// prerendered static file. Storing the decoded (Arabic) form as the param
+// means Next.js handles the encoding once and both casings resolve to the
+// same route — the same approach the tag and category routes already use.
 export async function generateStaticParams() {
   const posts = await loadPosts();
   return posts.map((post) => ({
-    slug: post.slug,
+    slug: readableSlug(post.slug),
   }));
 }
 
