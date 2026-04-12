@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "eslint",
     "migrate:sanity": "tsx scripts/migrate-to-sanity.ts",
-    "migrate:sanity:dry": "tsx scripts/migrate-to-sanity.ts --dry-run"
+    "migrate:sanity:dry": "tsx scripts/migrate-to-sanity.ts --dry-run",
+    "fetch:wp": "tsx scripts/fetch-from-wordpress.ts"
   },
   "dependencies": {
     "@sanity/image-url": "^2.1.1",

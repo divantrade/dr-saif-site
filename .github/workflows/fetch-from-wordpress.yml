@@ -1,0 +1,107 @@
+# Fetch all content from the source WordPress site into public/data/*.json,
+# commit the updated files to the branch, and optionally run the Sanity
+# migration in the same run.
+#
+# Triggered manually from GitHub Actions UI. The fetch and migration are both
+# idempotent — merging by WordPress `id` for JSON, by `legacyId` for Sanity —
+# so running this multiple times never creates duplicates.
+
+name: Fetch from WordPress
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: "WordPress source site (no trailing slash)"
+        required: true
+        default: "https://saifabdelfattah.net"
+        type: string
+      only:
+        description: "Restrict what's fetched (comma-separated: categories,tags,posts,media — or leave blank for all)"
+        required: false
+        default: ""
+        type: string
+      then_migrate:
+        description: "Also run the Sanity migration after fetching"
+        required: true
+        default: "no"
+        type: choice
+        options:
+          - "no"
+          - "yes (skip-images)"
+          - "yes (full)"
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # We commit back to the same branch, so a shallow clone is fine but
+          # we need credentials that can push.
+          persist-credentials: true
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Fetch from WordPress
+        env:
+          WP_SOURCE_URL: ${{ github.event.inputs.source_url }}
+        run: |
+          if [ -n "${{ github.event.inputs.only }}" ]; then
+            npm run fetch:wp -- --only=${{ github.event.inputs.only }}
+          else
+            npm run fetch:wp
+          fi
+
+      - name: Show what changed
+        run: |
+          echo "── Sizes ──"
+          ls -lh public/data/*.json
+          echo ""
+          echo "── Item counts ──"
+          for f in public/data/*.json; do
+            count=$(node -e "console.log(require('./$f').length || 0)")
+            echo "$f: $count items"
+          done
+
+      - name: Commit updated JSON (if any)
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public/data/*.json
+          if git diff --cached --quiet; then
+            echo "No JSON changes to commit."
+          else
+            git commit -m "chore(data): refresh WordPress export from ${{ github.event.inputs.source_url }}"
+            git push origin HEAD:${{ github.ref_name }}
+          fi
+
+      - name: Run Sanity migration (skip-images)
+        if: github.event.inputs.then_migrate == 'yes (skip-images)'
+        env:
+          NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+          NEXT_PUBLIC_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET || 'production' }}
+          NEXT_PUBLIC_SANITY_API_VERSION: ${{ vars.NEXT_PUBLIC_SANITY_API_VERSION || '2026-04-12' }}
+          SANITY_WRITE_TOKEN: ${{ secrets.SANITY_WRITE_TOKEN }}
+        run: npm run migrate:sanity -- --skip-images
+
+      - name: Run Sanity migration (full with images)
+        if: github.event.inputs.then_migrate == 'yes (full)'
+        env:
+          NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+          NEXT_PUBLIC_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET || 'production' }}
+          NEXT_PUBLIC_SANITY_API_VERSION: ${{ vars.NEXT_PUBLIC_SANITY_API_VERSION || '2026-04-12' }}
+          SANITY_WRITE_TOKEN: ${{ secrets.SANITY_WRITE_TOKEN }}
+        run: npm run migrate:sanity
