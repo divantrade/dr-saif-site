@@ -55,7 +55,7 @@ export default function AboutPage() {
                 alt={PERSONAL.displayName}
                 fill
                 className="object-cover"
-                style={{ objectPosition: "center 25%" }}
+                style={{ objectPosition: "center top" }}
                 sizes="224px"
                 priority
               />

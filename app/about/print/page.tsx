@@ -38,7 +38,7 @@ export default function PrintCVPage() {
                 alt={PERSONAL.displayName}
                 fill
                 className="object-cover"
-                style={{ objectPosition: "center 25%" }}
+                style={{ objectPosition: "center top" }}
                 sizes="120px"
                 priority
               />
