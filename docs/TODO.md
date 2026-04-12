@@ -4,92 +4,104 @@
 
 ## 🔴 مهام عاجلة
 
-### [١] تشخيص وإصلاح 404 على المقالات
-**السياق**: `dr-saif-site.vercel.app` يُرجع 404 للمقالات، بينما `-xi` يعمل.
-
-**المطلوب من المستخدم**:
-- [ ] لقطة شاشة من Vercel Dashboard → Projects (عدد المشاريع)
-- [ ] Production Branch للمشروع الرئيسي
-- [ ] حالة آخر deployment (Ready / Error / Building)
-- [ ] اختبار نفس slug على كلا الموقعين
-
-**ما سيفعله المساعد بناءً على المعلومات**:
-- إذا الفرع خاطئ: تصحيح إعدادات Vercel Git
-- إذا deployment عالق: trigger rebuild
-- إذا مشكلة في Next.js 16: middleware أو تعديل بنية الـ slugs
-
-### [٢] تشغيل ترحيل Sanity (محلياً)
+### [١] تشغيل ترحيل Sanity (محلياً)
 **الخطوات**:
 ```bash
 git checkout claude/fix-doctor-image-layout-0LdFh
 git pull
 npm install
 cp .env.example .env.local
-# عدّل .env.local وضع SANITY_WRITE_TOKEN
+# عدّل .env.local وضع SANITY_WRITE_TOKEN من Sanity → API → Tokens
 
-npm run migrate:sanity:dry    # فحص
+npm run migrate:sanity:dry    # فحص بدون اتصال
 npm run migrate:sanity        # ترحيل فعلي
 npm run dev
-# افتح http://localhost:3000/studio/saif وتحقّق
+# افتح http://localhost:3000/studio/saif وتحقّق من ظهور:
+#  - 100 مقال في تبويب المقالات
+#  - 36 تصنيف
+#  - 100 وسم
+#  - author واحد (الدكتور)
 ```
 
-**الوقت التقديري**: 5–10 دقائق.
+**الوقت التقديري**: 5–10 دقائق (حسب سرعة الإنترنت لتحميل الصور).
 
 ## 🟡 مهام متوسطة
 
-### [٣] Phase 2 — تحويل الموقع ليقرأ من Sanity
-يحدث بعد إنجاز [٢]:
+### [٢] Phase 2 — تحويل الموقع ليقرأ من Sanity
+يحدث بعد إنجاز [١]:
 - [ ] تحديث `lib/data.ts` لاستخدام GROQ queries بدل قراءة JSON
-- [ ] تحويل أنواع البيانات من WPPost إلى شكل Sanity
-- [ ] اختبار كل المسارات (`/`, `/blog`, `/blog/[slug]`, `/category/[slug]`, `/tag/[slug]`)
+- [ ] تحويل أنواع البيانات من `WPPost` إلى شكل Sanity
+- [ ] اختبار كل المسارات على `www.divanmax.com`:
+  - [ ] `/` (الرئيسية)
+  - [ ] `/blog` (القائمة)
+  - [ ] `/blog/[slug]` (مقال)
+  - [ ] `/category/[slug]`
+  - [ ] `/tag/[slug]`
+  - [ ] `/search`
 - [ ] حذف `public/data/*.json` (بعد التأكّد أن كل شيء يعمل)
+- [ ] اختبار Studio يُحدّث الموقع (بعد Webhook — المهمة [٣])
 
-### [٤] ربط دومين `divanmax.com`
-**بعد إصلاح [١]**:
-- [ ] اختيار الحلّ من `DEPLOYMENT.md`
-- [ ] إعدادات DNS في GoDaddy
-- [ ] تحديث Sanity CORS
-- [ ] تحديث `lib/site.ts` بالدومين الجديد
-
-### [٥] Webhook Sanity → Vercel
-**بعد إنجاز [٣]**:
-- [ ] إنشاء Deploy Hook في Vercel
-- [ ] إضافة Webhook في Sanity يُشغّل الـ Deploy Hook
-- [ ] اختبار: نشر مقال جديد → Vercel يبني → يظهر في الموقع
-
-### [٦] تبديل الـ API Token القديم
+### [٣] Webhook Sanity → Vercel
 **بعد إنجاز [٢]**:
-- [ ] Sanity → API → Tokens → حذف الـ token القديم (المُشارَك في الشات)
-- [ ] إنشاء token جديد (اختياري — ليس مطلوباً إلا لترحيل إضافي)
-- [ ] تحديث `.env.local` محلياً فقط
+- [ ] إنشاء Deploy Hook في Vercel:
+  - Vercel → Project → Settings → Git → Deploy Hooks → Create
+- [ ] إضافة Webhook في Sanity:
+  - Sanity → API → Webhooks → Add
+  - URL = رابط Deploy Hook
+  - Trigger: `create` + `update` + `delete` على post/category/tag/author
+  - Filter: `_type in ["post", "category", "tag", "author"]`
+- [ ] اختبار: نشر مقال جديد في Studio → Vercel يبني تلقائياً → يظهر في الموقع
+
+### [٤] تبديل الـ API Token القديم
+**بعد إنجاز [١]**:
+- [ ] Sanity → API → Tokens → حذف الـ token القديم (المُشارَك سابقاً)
+- [ ] (اختياري) إنشاء token جديد إذا احتجت ترحيلاً إضافياً
+- [ ] تحديث `.env.local` محلياً فقط — لا يحتاج أن يكون على Vercel
+
+### [٥] الهجرة النهائية لدومين الدكتور
+**بعد اكتمال كل المهام أعلاه ومراجعة الموقع الكاملة**:
+- [ ] تأكيد اسم دومين الدكتور الرسمي
+- [ ] Vercel → Settings → Domains → إضافة الدومين الجديد
+- [ ] إعداد DNS records لدى مسجّل الدومين
+- [ ] تحديث `lib/site.ts` → `SITE.url`
+- [ ] تحديث Sanity CORS origins
+- [ ] تعيين الدومين الجديد كـ **Primary** في Vercel
+- [ ] تحديث روابط السوشيال ميديا للدكتور
+- [ ] (بعد 30 يوم استقرار) حذف `www.divanmax.com` من Vercel
 
 ## 🟢 مهام تحسينية
 
-### [٧] توحيد الفرع الافتراضي
+### [٦] توحيد الفرع الافتراضي على GitHub
 الفرع الافتراضي حالياً `claude/push-to-github-QAaRx`. الاتفاقية المعيارية:
-- [ ] إنشاء فرع `main` من `claude/fix-doctor-image-layout-0LdFh` (بعد التأكّد من الإنتاج)
+- [ ] إنشاء/تحديث فرع `main` من أحدث فرع إنتاجي
 - [ ] تعيين `main` كالفرع الافتراضي على GitHub
 - [ ] تحديث Vercel ليبني من `main`
 - [ ] أرشفة/حذف الفروع `claude/*` القديمة
 
-### [٨] إضافة فحوصات CI
-- [ ] GitHub Action على كل PR: `npm run build` + `npx tsc --noEmit` + `npm run lint`
+### [٧] إضافة فحوصات CI
+- [ ] GitHub Action على كل PR:
+  - `npm run build`
+  - `npx tsc --noEmit`
+  - `npm run lint`
 - [ ] منع الـ merge إذا فشل CI
 
-### [٩] تحسينات على Studio
+### [٨] تحسينات على Studio
 - [ ] Logo مخصّص للدكتور في الشريط العلوي لـ Studio
-- [ ] Preview live للمقالات (عرض نسخة المقال كما ستظهر على الموقع)
+- [ ] Live Preview للمقالات (عرض نسخة المقال كما ستظهر على الموقع داخل Studio)
 - [ ] تجميع المقالات في Studio حسب السنة أو التصنيف
+- [ ] إضافة Custom Document Actions (مثل: "تصدير كـ PDF")
 
-### [١٠] تحسينات SEO
+### [٩] تحسينات SEO
 - [ ] Structured data (JSON-LD) للمقالات (Article schema)
 - [ ] Breadcrumbs schema
-- [ ] Open Graph images مخصّصة لكل مقال (لو الصورة المميّزة ناقصة)
+- [ ] Open Graph images مخصّصة لكل مقال (توليد تلقائي من Sanity)
+- [ ] Submit sitemap لـ Google Search Console على الدومين النهائي
 
-### [١١] أداء
-- [ ] lighthouse audit على الإنتاج
-- [ ] تحسين الصور (إعدادات Sanity image URL: `.auto("format").width(...)` )
+### [١٠] أداء
+- [ ] Lighthouse audit على الإنتاج بعد Phase 2
+- [ ] تحسين الصور (Sanity image URL: `.auto("format").width(...)`)
 - [ ] تحميل Studio كـ async chunk (لتقليل حجم بناء الصفحات الأخرى)
+- [ ] مراجعة bundle size بعد إضافة Sanity (حوالي 865 packages جديدة)
 
 ---
 
@@ -102,6 +114,8 @@ npm run dev
 - [x] كتابة سكريبت الترحيل (idempotent, with --dry-run, --skip-images)
 - [x] إعداد `.env.local` و`.gitignore`
 - [x] تحديث `next.config.ts` لـ Sanity CDN
+- [x] ربط الدومين المؤقت `www.divanmax.com`
+- [x] التأكّد من نشر Vercel تلقائي من GitHub
 - [x] توثيق كل ما سبق في `/docs/`
 
 آخر تحديث: 2026-04-12
