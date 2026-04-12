@@ -9,6 +9,11 @@ const nextConfig: NextConfig = {
         hostname: "www.saifabdelfattah.net",
         pathname: "/wp-content/uploads/**",
       },
+      {
+        protocol: "https",
+        hostname: "i.ytimg.com",
+        pathname: "/**",
+      },
     ],
   },
 };

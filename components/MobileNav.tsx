@@ -20,7 +20,9 @@ const TOP_LEVEL: NavItem[] = [
   { href: "/podcast", label: "بودكاست" },
   { href: "/videos", label: "فيديوهاتنا" },
   { href: "/waqf-alqalam", label: "وقف القلم" },
+  { href: "/civilizational-school", label: "المدرسة الحضارية" },
   { href: "/about", label: "السيرة الذاتية" },
+  { href: "/contact", label: "تواصل معنا" },
 ];
 
 export default function MobileNav({ articlesTree }: MobileNavProps) {

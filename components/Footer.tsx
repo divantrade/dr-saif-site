@@ -78,8 +78,18 @@ export default async function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/civilizational-school" className="text-gray-400 hover:text-emerald-400 transition-colors">
+                  المدرسة الحضارية
+                </Link>
+              </li>
+              <li>
                 <Link href="/about" className="text-gray-400 hover:text-emerald-400 transition-colors">
                   السيرة الذاتية
+                </Link>
+              </li>
+              <li>
+                <Link href="/contact" className="text-gray-400 hover:text-emerald-400 transition-colors">
+                  تواصل معنا
                 </Link>
               </li>
             </ul>

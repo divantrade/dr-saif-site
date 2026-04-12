@@ -84,7 +84,17 @@ export async function getPageBySlug(
   slug: string
 ): Promise<WPPage | undefined> {
   const pages = await loadPages();
-  return pages.find((p) => p.slug === slug);
+  // WP slugs are URL-encoded with lowercase hex, while JS encodeURIComponent
+  // produces uppercase hex. Compare both the raw slug (case-insensitive) and
+  // the decoded Arabic form so either works.
+  const target = decodeURIComponent(slug);
+  const lower = slug.toLowerCase();
+  return pages.find(
+    (p) =>
+      p.slug === slug ||
+      p.slug.toLowerCase() === lower ||
+      decodeURIComponent(p.slug) === target
+  );
 }
 
 // ─── Categories & Tags ───────────────────────────────────────────────────────

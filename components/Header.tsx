@@ -8,6 +8,7 @@ const TOP_LEVEL_LINKS = [
   { href: "/podcast", label: "بودكاست" },
   { href: "/videos", label: "فيديوهاتنا" },
   { href: "/waqf-alqalam", label: "وقف القلم" },
+  { href: "/civilizational-school", label: "المدرسة الحضارية" },
   { href: "/about", label: "السيرة الذاتية" },
 ];
 
