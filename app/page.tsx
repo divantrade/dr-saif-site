@@ -72,7 +72,7 @@ export default async function HomePage() {
                 الموقع الرسمي
               </p>
               <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight mb-5">
-                د. سيف الدين عبد الفتاح
+                أ.د. سيف الدين عبد الفتاح إسماعيل
               </h1>
               <p className="text-lg md:text-xl text-emerald-100 leading-relaxed mb-8 max-w-2xl mx-auto md:mx-0">
                 كتابات ومقالات في الفكر الحضاري الإسلامي والعلوم السياسية — مشروع فكري يسعى لإعادة قراءة الواقع من منظور حضاري مقاوم.

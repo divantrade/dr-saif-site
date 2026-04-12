@@ -54,7 +54,7 @@ export default function AboutPage() {
                 src={PORTRAIT}
                 alt={PERSONAL.fullName}
                 fill
-                className="object-cover object-top scale-150 translate-y-4"
+                className="object-cover object-top scale-125 translate-y-2"
                 sizes="224px"
                 priority
               />

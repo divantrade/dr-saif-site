@@ -40,7 +40,7 @@ export default async function Header() {
             </div>
             <div className="hidden sm:block">
               <h1 className="text-base font-bold text-gray-900 leading-tight">
-                د. سيف عبد الفتاح
+                أ.د. سيف الدين عبد الفتاح
               </h1>
               <p className="text-xs text-gray-400">كتابات ومقالات</p>
             </div>

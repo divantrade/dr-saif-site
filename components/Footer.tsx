@@ -17,7 +17,7 @@ export default async function Footer() {
               </div>
               <div>
                 <h2 className="text-base font-bold text-white leading-tight">
-                  د. سيف عبد الفتاح
+                  أ.د. سيف الدين عبد الفتاح
                 </h2>
                 <p className="text-xs text-gray-400">كتابات ومقالات</p>
               </div>
@@ -103,7 +103,7 @@ export default async function Footer() {
 
         <div className="mt-10 pt-6 border-t border-gray-800 text-center">
           <p className="text-xs text-gray-500">
-            &copy; {new Date().getFullYear()} د. سيف عبد الفتاح. جميع الحقوق محفوظة.
+            &copy; {new Date().getFullYear()} أ.د. سيف الدين عبد الفتاح. جميع الحقوق محفوظة.
           </p>
         </div>
       </div>
