@@ -14,7 +14,7 @@ export default async function PostCard({ post, featured = false }: PostCardProps
 
   return (
     <article
-      className={`group bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
+      className={`group relative bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
         featured ? "md:col-span-2 md:grid md:grid-cols-2" : "flex flex-col"
       }`}
     >
