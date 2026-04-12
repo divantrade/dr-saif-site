@@ -6,13 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate:sanity": "tsx scripts/migrate-to-sanity.ts",
+    "migrate:sanity:dry": "tsx scripts/migrate-to-sanity.ts --dry-run"
   },
   "dependencies": {
+    "@sanity/image-url": "^2.1.1",
+    "@sanity/vision": "^5.20.0",
     "@tailwindcss/typography": "^0.5.19",
     "next": "16.2.3",
+    "next-sanity": "^12.2.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "sanity": "^5.20.0",
     "server-only": "^0.0.1"
   },
   "devDependencies": {
@@ -20,9 +26,11 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.1",
     "eslint": "^9",
     "eslint-config-next": "16.2.3",
     "tailwindcss": "^4",
+    "tsx": "^4.21.0",
     "typescript": "^5"
   }
 }
