@@ -1,4 +1,4 @@
-import { loadPosts, stripHtml } from "@/lib/data";
+import { loadPosts, readableSlug, stripHtml } from "@/lib/data";
 import { SITE } from "@/lib/site";
 
 function escapeXml(input: string): string {
@@ -16,7 +16,7 @@ export async function GET() {
   const items = posts
     .map((p) => {
       const title = escapeXml(stripHtml(p.title.rendered));
-      const link = `${SITE.url}/blog/${p.slug}`;
+      const link = `${SITE.url}/blog/${encodeURIComponent(readableSlug(p.slug))}`;
       const excerpt = escapeXml(stripHtml(p.excerpt.rendered).slice(0, 500));
       const date = new Date(p.date).toUTCString();
       return `    <item>

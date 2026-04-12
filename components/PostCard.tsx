@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { WPPost, formatDate, stripHtml, getMediaById, getCategoriesByIds } from "@/lib/data";
+import { WPPost, formatDate, stripHtml, getMediaById, getCategoriesByIds, readableSlug } from "@/lib/data";
 
 interface PostCardProps {
   post: WPPost;
@@ -66,7 +66,7 @@ export default async function PostCard({ post, featured = false }: PostCardProps
         <h3 className={`font-bold text-gray-900 leading-relaxed mb-2 line-clamp-2 group-hover:text-emerald-700 transition-colors ${
           featured ? "text-xl md:text-2xl" : "text-lg"
         }`}>
-          <Link href={`/blog/${post.slug}`} className="after:absolute after:inset-0">
+          <Link href={`/blog/${encodeURIComponent(readableSlug(post.slug))}`} className="after:absolute after:inset-0">
             <span dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
           </Link>
         </h3>
