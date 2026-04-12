@@ -1,17 +1,24 @@
 // Sanity project configuration.
-// Values are read from environment variables with safe fallbacks so the app
-// builds even when .env.local is missing (useful for CI / first-time setup).
+// All values are read from environment variables — no hardcoded fallbacks.
+// Configure them in `.env.local` (see `.env.example` for the template).
 
-export const projectId =
-  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || "qgv6yxcl";
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `Missing required environment variable: ${name}. See .env.example.`
+    );
+  }
+  return value;
+}
 
-export const dataset =
-  process.env.NEXT_PUBLIC_SANITY_DATASET || "production";
+export const projectId = requireEnv("NEXT_PUBLIC_SANITY_PROJECT_ID");
+
+export const dataset = requireEnv("NEXT_PUBLIC_SANITY_DATASET");
 
 // API version — a date string. Sanity recommends pinning to the date you
 // developed against so future schema changes in the platform don't surprise you.
-export const apiVersion =
-  process.env.NEXT_PUBLIC_SANITY_API_VERSION || "2026-04-12";
+export const apiVersion = requireEnv("NEXT_PUBLIC_SANITY_API_VERSION");
 
 // Write-scope token used by server-side migration scripts and webhook
 // handlers. MUST remain server-side only — never expose to the client.
