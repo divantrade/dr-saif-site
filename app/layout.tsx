@@ -44,7 +44,23 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ar" dir="rtl" className="h-full antialiased">
-      <body className="min-h-full flex flex-col bg-gray-50 text-gray-900">
+      <head>
+        {/* Arabic typography: IBM Plex Sans Arabic for body, Amiri for
+            display/quotes. Loaded via <link> so the build works even in
+            restricted-network environments and the font CSS is cached at
+            the edge rather than inlined into the build output. */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=IBM+Plex+Sans+Arabic:wght@300;400;500;600;700&display=swap"
+        />
+      </head>
+      <body className="min-h-full flex flex-col bg-gray-50 text-gray-900 font-body">
         <Header />
         <main className="flex-1">{children}</main>
         <Footer />
