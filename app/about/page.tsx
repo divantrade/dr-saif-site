@@ -52,9 +52,10 @@ export default function AboutPage() {
             <div className="relative w-48 h-48 md:w-56 md:h-56 mx-auto md:mx-0 rounded-full overflow-hidden border-4 border-white/20 shadow-2xl bg-emerald-900">
               <Image
                 src={PORTRAIT}
-                alt={PERSONAL.fullName}
+                alt={PERSONAL.displayName}
                 fill
-                className="object-cover object-top scale-125 translate-y-2"
+                className="object-cover"
+                style={{ objectPosition: "center 25%" }}
                 sizes="224px"
                 priority
               />
@@ -64,7 +65,7 @@ export default function AboutPage() {
                 السيرة الذاتية
               </p>
               <h1 className="text-3xl md:text-5xl font-bold mb-3 leading-tight">
-                {PERSONAL.honorific} {PERSONAL.fullName}
+                {PERSONAL.honorific} {PERSONAL.displayName}
               </h1>
               <p className="text-emerald-50 text-lg md:text-xl mb-5">
                 {PERSONAL.currentTitle}

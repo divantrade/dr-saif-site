@@ -35,9 +35,10 @@ export default function PrintCVPage() {
             <div className="cv-portrait">
               <Image
                 src={PORTRAIT}
-                alt={PERSONAL.fullName}
+                alt={PERSONAL.displayName}
                 fill
-                className="object-cover object-top scale-125 translate-y-1"
+                className="object-cover"
+                style={{ objectPosition: "center 25%" }}
                 sizes="120px"
                 priority
               />
@@ -49,7 +50,7 @@ export default function PrintCVPage() {
           <div className="cv-hero-main">
             <p className="cv-eyebrow">السيرة الذاتية</p>
             <h1 className="cv-name">
-              {PERSONAL.honorific} {PERSONAL.fullName}
+              {PERSONAL.honorific} {PERSONAL.displayName}
             </h1>
             <p className="cv-title">{PERSONAL.currentTitle}</p>
             <p className="cv-affiliation">{PERSONAL.affiliation}</p>

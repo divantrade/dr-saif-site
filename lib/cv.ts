@@ -5,7 +5,10 @@
  */
 
 export const PERSONAL = {
+  /** Full legal name — used in "الاسم الكامل" field, official records, body content. */
   fullName: "سيف الدين عبد الفتاح إسماعيل",
+  /** Display name — used in titles, headers, hero banners (no إسماعيل). */
+  displayName: "سيف الدين عبد الفتاح",
   honorific: "أ.د.",
   birthDate: "11 نوفمبر 1954",
   birthYear: 1954,
