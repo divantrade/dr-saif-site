@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import PostCard from "@/components/PostCard";
+import SanityPostCard from "@/components/SanityPostCard";
 import Pagination from "@/components/Pagination";
 import { axisColors } from "@/components/AxisBadge";
 import {
@@ -68,7 +68,7 @@ export default async function AxisPage({ params, searchParams }: PageProps) {
           href="/axis"
           className="hover:text-emerald-600 transition-colors"
         >
-          المشروع الفكري
+          المقالات
         </Link>
         <span>/</span>
         <span className="text-gray-700">{axis.name}</span>
@@ -135,7 +135,7 @@ export default async function AxisPage({ params, searchParams }: PageProps) {
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-12">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <SanityPostCard key={post._id} post={post} />
             ))}
           </div>
           <Pagination

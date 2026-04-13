@@ -12,7 +12,6 @@ import {
   seriesHref,
   readableSlug,
   formatDate,
-  stripHtml,
 } from "@/lib/types";
 import { axisColors } from "@/components/AxisBadge";
 
@@ -118,11 +117,10 @@ export default async function SeriesPage({ params }: PageProps) {
       {posts.length > 0 ? (
         <ol className={`relative border-r-2 ${colors.border} pr-6 md:pr-10 space-y-6`}>
           {posts.map((post) => {
-            const p = post as typeof post & { seriesNumber?: number | null };
-            const num = p.seriesNumber ?? null;
-            const excerpt = stripHtml(post.excerpt.rendered).slice(0, 220);
+            const num = post.seriesNumber ?? null;
+            const excerpt = (post.excerpt || "").slice(0, 220);
             return (
-              <li key={post.id} className="relative group">
+              <li key={post._id} className="relative group">
                 {/* Episode number bullet */}
                 <span
                   className={`absolute right-[calc(theme(spacing.6)*-1-theme(spacing.5))] md:right-[calc(theme(spacing.10)*-1-theme(spacing.5))] top-1 w-10 h-10 rounded-full ${colors.accent} text-xs font-bold flex items-center justify-center tabular-nums shadow-sm`}
@@ -135,7 +133,7 @@ export default async function SeriesPage({ params }: PageProps) {
                       href={`/blog/${encodeURIComponent(readableSlug(post.slug))}`}
                       className="hover:text-emerald-700 transition-colors"
                     >
-                      {stripHtml(post.title.rendered)}
+                      {post.title}
                     </Link>
                   </h2>
                   {excerpt && (
@@ -144,10 +142,10 @@ export default async function SeriesPage({ params }: PageProps) {
                     </p>
                   )}
                   <time
-                    dateTime={post.date}
+                    dateTime={post.publishedAt}
                     className="text-xs text-gray-400 tabular-nums"
                   >
-                    {formatDate(post.date)}
+                    {formatDate(post.publishedAt)}
                   </time>
                 </article>
               </li>
