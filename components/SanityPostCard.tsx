@@ -4,6 +4,7 @@ import type { SanityImageSource } from "@sanity/image-url";
 import type { HomePost } from "@/lib/types";
 import { postHref, seriesHref, formatDate } from "@/lib/types";
 import { urlForImage } from "@/sanity/image";
+import { getFallbackImageForSlug } from "@/lib/data";
 import {
   axisColors,
   axisColorByNumber,
@@ -18,15 +19,17 @@ interface SanityPostCardProps {
 
 /**
  * Post card that reads Sanity-native post data (HomePost) directly.
- * When no featured image is available, the visual well is filled with
- * the post's axis colour + a subtle Islamic-geometric pattern so every
- * card keeps a clear visual identity.
+ * When the Sanity `featuredImage` is missing, we fall back to the
+ * WordPress-era image (either the `featured_media` asset or the first
+ * `<img>` inline in the post body) so listings don't fall back to a
+ * coloured plate when a real image exists in the article itself. Only
+ * if neither exists do we render the axis-coloured plate.
  */
-export default function SanityPostCard({
+export default async function SanityPostCard({
   post,
   featured = false,
 }: SanityPostCardProps) {
-  const img = post.featuredImage
+  const sanityImg = post.featuredImage
     ? urlForImage(post.featuredImage as SanityImageSource)
         .width(featured ? 1200 : 640)
         .height(featured ? 700 : 420)
@@ -34,6 +37,16 @@ export default function SanityPostCard({
         .auto("format")
         .url()
     : null;
+
+  // Only look up the WP fallback when Sanity has no image — avoids
+  // hitting the local JSON for every card on pages where most covers
+  // already come from Sanity.
+  const fallback = sanityImg
+    ? null
+    : await getFallbackImageForSlug(post.slug);
+
+  const img = sanityImg ?? fallback?.url ?? null;
+  const imgAlt = post.imageAlt || fallback?.alt || post.title;
 
   const axisC = post.axis
     ? post.axis.color
@@ -56,7 +69,7 @@ export default function SanityPostCard({
         {img ? (
           <Image
             src={img}
-            alt={post.imageAlt || post.title}
+            alt={imgAlt}
             fill
             className="object-cover transition-transform duration-500 group-hover:scale-105"
             sizes={
