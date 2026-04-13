@@ -1,5 +1,24 @@
 # Scripts
 
+## `verify-sanity.ts` — dataset health check
+
+Reads Sanity and reports on:
+- Posts: total, missing `legacyId` / `publishedAt` / `axis`, date range
+- Axes: expect 7 with numbers 1..7, all with slugs
+- Series: expect 6, each with valid axis ref, each with ≥ 1 episode
+- Cross-references: series posts have `seriesNumber`, no orphan series refs
+- Axis distribution: how many posts per axis (informational)
+
+Exits 1 on any hard failure (posts missing axis, orphan refs, etc.).
+Warnings pass. Runs daily at 06:00 UTC via GitHub Actions.
+
+```bash
+npm run verify:sanity           # pretty report
+npm run verify:sanity:json      # JSON (for CI consumption)
+```
+
+---
+
 ## `apply-axes-to-sanity.ts` — apply the new thematic taxonomy
 
 Reads `docs/cork/reclassification-map.json` and writes:

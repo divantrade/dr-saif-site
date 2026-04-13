@@ -11,6 +11,8 @@
     "migrate:sanity:dry": "tsx scripts/migrate-to-sanity.ts --dry-run",
     "apply:axes": "tsx scripts/apply-axes-to-sanity.ts",
     "apply:axes:dry": "tsx scripts/apply-axes-to-sanity.ts --dry-run",
+    "verify:sanity": "tsx scripts/verify-sanity.ts",
+    "verify:sanity:json": "tsx scripts/verify-sanity.ts --json",
     "fetch:wp": "tsx scripts/fetch-from-wordpress.ts"
   },
   "dependencies": {

@@ -1,0 +1,79 @@
+# Apply the new thematic taxonomy (axes + series) to Sanity.
+#
+# Triggered manually from the GitHub Actions UI. Reads
+# docs/cork/reclassification-map.json from the repo and writes to Sanity:
+#   - 7 intellectualAxis documents (deterministic _id: axis-1 … axis-7)
+#   - 6 series documents (_id: series-<slug>)
+#   - patches every post (matched by legacyId) with axis._ref,
+#     series._ref (when applicable) and seriesNumber.
+#
+# Idempotent — safe to re-run any time the classification changes. Only
+# the delta is written (createOrReplace for taxonomy, per-doc patches
+# for posts).
+#
+# Required repository secrets (Settings → Secrets and variables → Actions):
+#   - NEXT_PUBLIC_SANITY_PROJECT_ID   (same secret used by migrate-to-sanity)
+#   - SANITY_WRITE_TOKEN              (Editor-permission API token)
+#
+# Optional repository variables:
+#   - NEXT_PUBLIC_SANITY_DATASET      (defaults to "production")
+#   - NEXT_PUBLIC_SANITY_API_VERSION  (defaults to "2026-04-12")
+#
+# Prereq: posts must already be in Sanity with `legacyId` populated. If
+# they aren't yet, run the "Migrate posts to Sanity" workflow first.
+
+name: Apply axes to Sanity
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "Apply mode"
+        required: true
+        default: "dry-run"
+        type: choice
+        options:
+          - dry-run         # Plan only, no writes. Safe first step.
+          - taxonomy-only   # Create/update the 7 axes + 6 series; skip post patches.
+          - posts-only      # Patch posts only; assumes taxonomy already exists.
+          - full            # Everything: taxonomy + post patches.
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply axes (${{ github.event.inputs.mode }})
+        env:
+          NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+          NEXT_PUBLIC_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET || 'production' }}
+          NEXT_PUBLIC_SANITY_API_VERSION: ${{ vars.NEXT_PUBLIC_SANITY_API_VERSION || '2026-04-12' }}
+          SANITY_WRITE_TOKEN: ${{ secrets.SANITY_WRITE_TOKEN }}
+        run: |
+          case "${{ github.event.inputs.mode }}" in
+            dry-run)
+              npm run apply:axes:dry
+              ;;
+            taxonomy-only)
+              npm run apply:axes -- --only=taxonomy
+              ;;
+            posts-only)
+              npm run apply:axes -- --only=posts
+              ;;
+            full)
+              npm run apply:axes
+              ;;
+          esac
