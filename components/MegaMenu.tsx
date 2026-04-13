@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
 import type {
   AxisSummary,
@@ -14,7 +15,7 @@ import {
   yearHref,
   categoryHref,
 } from "@/lib/types";
-import { axisColors } from "./AxisBadge";
+import { axisColors, axisColorByNumber } from "./AxisBadge";
 
 interface MegaMenuProps {
   axes: AxisSummary[];
@@ -29,19 +30,23 @@ interface TabDef {
   id: Tab;
   label: string;
   href: string;
+  matchPrefix: string;
 }
 
 const TABS: TabDef[] = [
-  { id: "project", label: "المشروع الفكري", href: "/axis" },
-  { id: "series", label: "السلاسل", href: "/series" },
-  { id: "archive", label: "أرشيف", href: "/archive" },
+  { id: "project", label: "المشروع الفكري", href: "/axis", matchPrefix: "/axis" },
+  { id: "series", label: "السلاسل", href: "/series", matchPrefix: "/series" },
+  { id: "archive", label: "أرشيف", href: "/archive", matchPrefix: "/archive" },
 ];
 
 /**
- * Three-trigger mega menu (المشروع الفكري / السلاسل / أرشيف).
- * Each trigger opens its own panel; hovering between triggers swaps the
- * panel without closing the dropdown — the panel stays open until the
- * cursor leaves the whole menu region.
+ * Desktop mega menu with three anchored triggers. Each trigger has its own
+ * panel positioned just beneath it; moving the cursor between triggers
+ * swaps panels without closing the dropdown.
+ *
+ * - Active trigger: green text + 2px green underline (matches HeaderLink).
+ * - Chevron rotates 180° when its panel is open.
+ * - Panel closes on Escape or when the cursor leaves the whole menu region.
  */
 export default function MegaMenu({
   axes,
@@ -51,6 +56,7 @@ export default function MegaMenu({
 }: MegaMenuProps) {
   const [openTab, setOpenTab] = useState<Tab | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pathname = usePathname() || "/";
 
   const cancelClose = () => {
     if (closeTimer.current) {
@@ -72,16 +78,23 @@ export default function MegaMenu({
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Sort series by episode count descending for the panel.
+  const seriesSorted = [...series].sort((a, b) => b.postCount - a.postCount);
+
   return (
     <div
-      className="relative flex items-center"
+      className="flex items-stretch self-stretch"
       onMouseLeave={scheduleClose}
       onMouseEnter={cancelClose}
     >
       {TABS.map((tab) => {
         const isOpen = openTab === tab.id;
+        const isActive =
+          pathname === tab.matchPrefix ||
+          pathname.startsWith(`${tab.matchPrefix}/`);
+
         return (
-          <div key={tab.id} className="relative">
+          <div key={tab.id} className="relative flex items-stretch">
             <button
               type="button"
               aria-haspopup="true"
@@ -92,15 +105,15 @@ export default function MegaMenu({
               }}
               onFocus={() => setOpenTab(tab.id)}
               onClick={() => setOpenTab(isOpen ? null : tab.id)}
-              className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors inline-flex items-center gap-1 ${
-                isOpen
-                  ? "text-emerald-700 bg-emerald-50"
-                  : "text-gray-700 hover:text-emerald-700 hover:bg-emerald-50"
+              className={`relative px-3 py-5 text-[0.9rem] font-medium inline-flex items-center gap-1.5 transition-colors ${
+                isOpen || isActive
+                  ? "text-emerald-700"
+                  : "text-gray-700 hover:text-emerald-700"
               }`}
             >
               {tab.label}
               <svg
-                className={`w-3.5 h-3.5 transition-transform ${
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${
                   isOpen ? "rotate-180" : ""
                 }`}
                 fill="none"
@@ -114,214 +127,270 @@ export default function MegaMenu({
                   d="M19 9l-7 7-7-7"
                 />
               </svg>
+              <span
+                aria-hidden
+                className={`absolute right-3 left-3 bottom-0 h-[2px] bg-emerald-600 transition-opacity ${
+                  isActive ? "opacity-100" : "opacity-0"
+                }`}
+              />
             </button>
+
+            {isOpen && (
+              <div
+                className="absolute top-full right-0 pt-2 z-50"
+                onMouseEnter={cancelClose}
+                onMouseLeave={scheduleClose}
+              >
+                <div className="bg-white border border-gray-100 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] animate-[panelIn_180ms_ease-out] origin-top overflow-hidden">
+                  {tab.id === "project" && (
+                    <ProjectPanel axes={axes} onNavigate={() => setOpenTab(null)} />
+                  )}
+                  {tab.id === "series" && (
+                    <SeriesPanel
+                      series={seriesSorted}
+                      onNavigate={() => setOpenTab(null)}
+                    />
+                  )}
+                  {tab.id === "archive" && (
+                    <ArchivePanel
+                      years={years}
+                      publishers={publishers}
+                      onNavigate={() => setOpenTab(null)}
+                    />
+                  )}
+                </div>
+
+                <style>{`
+                  @keyframes panelIn {
+                    from { opacity: 0; transform: translateY(-4px); }
+                    to   { opacity: 1; transform: translateY(0); }
+                  }
+                `}</style>
+              </div>
+            )}
           </div>
         );
       })}
-
-      {openTab && (
-        <div
-          className="absolute top-full right-0 left-0 pt-3 z-50"
-          // Anchor the panel to the menu — its right edge meets the rightmost
-          // trigger so it appears under the menu, not flush to the viewport.
-          style={{ minWidth: "min(100vw - 2rem, 880px)" }}
-          onMouseEnter={cancelClose}
-          onMouseLeave={scheduleClose}
-        >
-          <div className="bg-white border border-gray-200 rounded-2xl shadow-2xl overflow-hidden animate-[panelIn_180ms_ease-out] origin-top">
-            {openTab === "project" && <ProjectPanel axes={axes} />}
-            {openTab === "series" && <SeriesPanel series={series} axes={axes} />}
-            {openTab === "archive" && (
-              <ArchivePanel years={years} publishers={publishers} />
-            )}
-          </div>
-
-          <style>{`
-            @keyframes panelIn {
-              from { opacity: 0; transform: translateY(-4px); }
-              to   { opacity: 1; transform: translateY(0); }
-            }
-          `}</style>
-        </div>
-      )}
     </div>
   );
 }
 
-// ─── Sub-panels ─────────────────────────────────────────────────────────────
+// ─── Panels ─────────────────────────────────────────────────────────────────
 
-function ProjectPanel({ axes }: { axes: AxisSummary[] }) {
+function PanelHeader({ label }: { label: string }) {
   return (
-    <div className="p-6">
-      <div className="flex items-baseline justify-between mb-4">
-        <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-emerald-700">
-          المشروع الفكري — ٧ محاور
-        </h3>
-        <Link
-          href="/axis"
-          className="text-xs text-gray-500 hover:text-emerald-700"
+    <div className="px-5 pt-4 pb-2">
+      <p className="text-[0.78rem] font-semibold text-gray-400 tracking-wide">
+        {label}
+      </p>
+    </div>
+  );
+}
+
+function PanelFooter({
+  href,
+  label,
+  onNavigate,
+}: {
+  href: string;
+  label: string;
+  onNavigate: () => void;
+}) {
+  return (
+    <div className="border-t border-gray-100 px-5 py-3 bg-gray-50">
+      <Link
+        href={href}
+        onClick={onNavigate}
+        className="inline-flex items-center gap-1 text-[0.8rem] font-medium text-emerald-700 hover:text-emerald-800 transition-colors"
+      >
+        <svg
+          className="w-3.5 h-3.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
         >
-          عرض الكل ←
-        </Link>
-      </div>
-      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M15 19l-7-7 7-7"
+          />
+        </svg>
+        {label}
+      </Link>
+    </div>
+  );
+}
+
+function ProjectPanel({
+  axes,
+  onNavigate,
+}: {
+  axes: AxisSummary[];
+  onNavigate: () => void;
+}) {
+  return (
+    <div className="w-[380px]">
+      <PanelHeader label={`المشروع الفكري — ٧ محاور`} />
+      <ul className="pb-2">
         {axes.map((a) => {
-          const c = axisColors(a.color);
+          // Prefer explicit colour, fall back to axis-number default so any
+          // Sanity doc missing a colour still renders with the right dot.
+          const c = a.color ? axisColors(a.color) : axisColorByNumber(a.axisNumber);
           return (
             <li key={a._id}>
               <Link
                 href={axisHref(a.slug)}
-                className={`group flex items-start gap-3 p-3 rounded-xl border ${c.border} ${c.soft} hover:shadow-md transition-all`}
+                onClick={onNavigate}
+                className="group flex items-center gap-3 px-5 py-[0.65rem] transition-colors hover:bg-gray-50"
               >
                 <span
-                  className={`shrink-0 w-9 h-9 rounded-lg ${c.accent} flex items-center justify-center text-xs font-bold tabular-nums`}
-                >
-                  {a.axisNumber}
+                  className={`shrink-0 w-2.5 h-2.5 rounded-full ${c.dot}`}
+                  aria-hidden
+                />
+                <span className="flex-1 text-[0.88rem] text-gray-800 group-hover:text-emerald-800 transition-colors leading-snug">
+                  {a.name}
                 </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-semibold text-gray-900 text-sm leading-tight group-hover:text-emerald-800 transition-colors">
-                    {a.name}
-                  </span>
-                  {a.tagline && (
-                    <span className="block text-xs text-gray-600 leading-snug mt-0.5 line-clamp-1">
-                      {a.tagline}
-                    </span>
-                  )}
-                </span>
-                <span className="text-xs text-gray-500 tabular-nums shrink-0 self-center">
-                  {a.postCount}
+                <span className="shrink-0 text-[0.72rem] text-gray-400 tabular-nums">
+                  {a.postCount} مقال
                 </span>
               </Link>
             </li>
           );
         })}
       </ul>
+      <PanelFooter
+        href="/axis"
+        label="عرض كل المحاور"
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }
 
 function SeriesPanel({
   series,
-  axes,
+  onNavigate,
 }: {
   series: SeriesSummary[];
-  axes: AxisSummary[];
+  onNavigate: () => void;
 }) {
-  const axesByNumber = new Map(axes.map((a) => [a.axisNumber, a]));
   return (
-    <div className="p-6">
-      <div className="flex items-baseline justify-between mb-4">
-        <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-emerald-700">
-          السلاسل — أعمدة مرقّمة
-        </h3>
-        <Link
-          href="/series"
-          className="text-xs text-gray-500 hover:text-emerald-700"
-        >
-          عرض الكل ←
-        </Link>
-      </div>
-      <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
-        {series.map((s) => {
-          const ax = axesByNumber.get(s.axisNumber);
-          const c = axisColors(ax?.color ?? null);
-          return (
-            <li key={s._id}>
-              <Link
-                href={seriesHref(s.slug)}
-                className="group flex items-start gap-3 p-3 rounded-xl border border-gray-100 hover:border-emerald-200 hover:bg-gray-50 transition-all"
-              >
-                <span
-                  className={`shrink-0 w-9 h-9 rounded-lg bg-gradient-to-br ${c.gradient} text-white flex items-center justify-center text-xs font-bold tabular-nums`}
-                >
-                  {s.postCount}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className="block font-semibold text-gray-900 text-sm leading-tight group-hover:text-emerald-800 transition-colors">
-                    {s.name}
-                    {s.featured && (
-                      <span className="mr-1.5 align-middle text-[9px] font-bold uppercase tracking-wider px-1.5 py-px rounded-full bg-amber-100 text-amber-800">
-                        ★
-                      </span>
-                    )}
+    <div className="w-[380px]">
+      <PanelHeader label="السلاسل المقالية" />
+      <ul className="pb-2">
+        {series.map((s) => (
+          <li key={s._id}>
+            <Link
+              href={seriesHref(s.slug)}
+              onClick={onNavigate}
+              className="group flex items-center gap-3 px-5 py-[0.65rem] transition-colors hover:bg-gray-50"
+            >
+              <BookIcon />
+              <span className="flex-1 text-[0.88rem] text-gray-800 group-hover:text-emerald-800 transition-colors leading-snug">
+                {s.name}
+                {s.featured && (
+                  <span className="ms-2 align-middle text-[9px] font-bold tracking-wider px-1.5 py-px rounded bg-amber-50 text-amber-700 border border-amber-200">
+                    ★
                   </span>
-                  {s.tagline && (
-                    <span className="block text-xs text-gray-500 leading-snug mt-0.5 line-clamp-1">
-                      {s.tagline}
-                    </span>
-                  )}
-                </span>
-              </Link>
-            </li>
-          );
-        })}
+                )}
+              </span>
+              <span className="shrink-0 text-[0.72rem] text-gray-400 tabular-nums">
+                {s.postCount} حلقة
+              </span>
+            </Link>
+          </li>
+        ))}
       </ul>
+      <PanelFooter
+        href="/series"
+        label="كل السلاسل"
+        onNavigate={onNavigate}
+      />
     </div>
+  );
+}
+
+function BookIcon() {
+  return (
+    <svg
+      aria-hidden
+      className="shrink-0 w-4 h-4 text-gray-400 group-hover:text-emerald-600 transition-colors"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={1.8}
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
+      />
+    </svg>
   );
 }
 
 function ArchivePanel({
   years,
   publishers,
+  onNavigate,
 }: {
   years: YearSummary[];
   publishers: PublisherSummary[];
+  onNavigate: () => void;
 }) {
   return (
-    <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-      <div>
-        <div className="flex items-baseline justify-between mb-3">
-          <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-emerald-700">
-            حسب السنة
-          </h3>
-          <Link
-            href="/archive"
-            className="text-xs text-gray-500 hover:text-emerald-700"
-          >
-            الأرشيف الكامل ←
-          </Link>
+    <div className="w-[620px] max-w-[90vw]">
+      <div className="grid grid-cols-2">
+        {/* Years */}
+        <div>
+          <PanelHeader label="حسب السنة" />
+          <ul className="px-3 pb-2 grid grid-cols-2 gap-x-1 gap-y-0.5">
+            {years.map((y) => (
+              <li key={y.year}>
+                <Link
+                  href={yearHref(y.year)}
+                  onClick={onNavigate}
+                  className="group flex items-baseline justify-between gap-1 px-3 py-2 rounded-md text-[0.82rem] text-gray-700 hover:text-emerald-800 hover:bg-gray-50 transition-colors"
+                >
+                  <span className="font-medium tabular-nums">{y.year}</span>
+                  <span className="text-[0.72rem] text-gray-400 tabular-nums">
+                    {y.count}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul className="grid grid-cols-3 gap-2">
-          {years.map((y) => (
-            <li key={y.year}>
-              <Link
-                href={yearHref(y.year)}
-                className="group flex flex-col items-center justify-center py-2.5 rounded-lg border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
-              >
-                <span className="text-sm font-bold text-gray-900 tabular-nums group-hover:text-emerald-800">
-                  {y.year}
-                </span>
-                <span className="text-[10px] text-gray-400 tabular-nums">
-                  {y.count}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
 
-      <div>
-        <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-emerald-700 mb-3">
-          حسب منصّة النشر
-        </h3>
-        <ul className="space-y-1">
-          {publishers.map((p) => (
-            <li key={p.slug}>
-              <Link
-                href={categoryHref(p.slug)}
-                className="group flex items-baseline justify-between gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <span className="text-sm font-medium text-gray-700 group-hover:text-emerald-800 transition-colors">
-                  {p.name}
-                </span>
-                <span className="text-xs text-gray-400 tabular-nums">
-                  {p.count}
-                </span>
-              </Link>
-            </li>
-          ))}
-        </ul>
+        {/* Publishers — separated by a subtle vertical line. In RTL the
+            DOM-order second child sits visually on the left; `border-s` uses
+            inline-start so the line ends up between the two columns. */}
+        <div className="border-s border-gray-100">
+          <PanelHeader label="حسب منصّة النشر" />
+          <ul className="pb-2">
+            {publishers.map((p) => (
+              <li key={p.slug}>
+                <Link
+                  href={categoryHref(p.slug)}
+                  onClick={onNavigate}
+                  className="group flex items-baseline justify-between gap-2 px-5 py-2 text-[0.82rem] text-gray-700 hover:text-emerald-800 hover:bg-gray-50 transition-colors"
+                >
+                  <span className="font-medium truncate">{p.name}</span>
+                  <span className="text-[0.72rem] text-gray-400 tabular-nums shrink-0">
+                    {p.count}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </div>
       </div>
+      <PanelFooter
+        href="/archive"
+        label="الأرشيف الكامل"
+        onNavigate={onNavigate}
+      />
     </div>
   );
 }

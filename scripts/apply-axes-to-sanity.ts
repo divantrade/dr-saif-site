@@ -114,55 +114,55 @@ const AXES: AxisSeed[] = [
     description:
       "كتابات في المنظور الحضاري الإسلامي و النظرية السياسية الإسلامية و " +
       "الفقه الحضاري و المقاصد و المنهجية الإسلامية و بناء المفاهيم.",
-    color: "indigo",
+    color: "emerald",
     icon: "compass",
   },
   {
     axisNumber: 2,
     name: "سؤال التراث والذاكرة الحضارية",
-    shortName: "سؤال التراث",
+    shortName: "التراث والذاكرة",
     slug: "heritage-and-memory",
     tagline: "قراءة في تراث الأمة و حواره مع الواقع.",
     description:
       "حوار مع رواد النهضة و الفكر الإسلامي (ابن خلدون، الكواكبي، الأفغاني، " +
       "محمد عبده، طارق البشري، حامد ربيع …) و سؤال الذاكرة و الاستشراق و الاستغراب.",
-    color: "amber",
+    color: "sky",
     icon: "scroll",
   },
   {
     axisNumber: 3,
     name: "مشروعات النهوض والإصلاح والتغيير",
-    shortName: "مشروعات النهوض",
+    shortName: "النهوض والإصلاح",
     slug: "renaissance-and-reform",
     tagline: "خرائط النهوض و طرائق الإصلاح و فقه التغيير.",
     description:
       "بحث في مشاريع النهضة و الإصلاح و فقه التغيير و سُنن الاجتماع و " +
       "التجديد و النقد الذاتي و مشاتل التغيير.",
-    color: "emerald",
+    color: "violet",
     icon: "spark",
   },
   {
     axisNumber: 4,
     name: "الاستبداد — تشريحه ومقاومته",
-    shortName: "الاستبداد",
+    shortName: "الاستبداد ومقاومته",
     slug: "tyranny-anatomy",
     tagline: "تشريح الظاهرة الاستبدادية و سُبل مقاومتها.",
     description:
       "تحليل الاستبداد و الجمهورية الجديدة و دولة الضد و عسكرة الدولة و " +
       "أحداث كاشفة و مفاهيم ملتبسة و فقه مقاومة الطغيان.",
-    color: "rose",
+    color: "red",
     icon: "shield",
   },
   {
     axisNumber: 5,
     name: "المواطنة وحقوق الإنسان",
-    shortName: "المواطنة",
+    shortName: "المواطنة والحقوق",
     slug: "citizenship-and-rights",
     tagline: "في المواطن و حقوقه و الجماعة الوطنية.",
     description:
       "كتابات في المواطنة من جديد و حقوق الإنسان و المجتمع المدني و " +
       "الجماعة الوطنية و الإرادة الشعبية.",
-    color: "teal",
+    color: "amber",
     icon: "scales",
   },
   {
@@ -174,19 +174,19 @@ const AXES: AxisSeed[] = [
     description:
       "متابعة الثورات العربية، الانتقال الديموقراطي، الثورة المضادة، " +
       "و تحولات الإقليم منذ 2011.",
-    color: "violet",
+    color: "orange",
     icon: "wave",
   },
   {
     axisNumber: 7,
     name: "المقاومة والقضية الفلسطينية",
-    shortName: "المقاومة",
+    shortName: "المقاومة وفلسطين",
     slug: "resistance-and-palestine",
     tagline: "قاموس المقاومة و طوفان الأقصى و القضية المركزية للأمة.",
     description:
       "كتابات في القضية الفلسطينية و المقاومة الحضارية و طوفان الأقصى و " +
       "الكيان الصهيوني و التطبيع و المقاطعة.",
-    color: "orange",
+    color: "lime",
     icon: "chain",
   },
 ];
