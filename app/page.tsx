@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Hero from "@/components/Hero";
 import Quotes from "@/components/Quotes";
+import StatsStrip from "@/components/StatsStrip";
 import SanityPostCard from "@/components/SanityPostCard";
 import AxesShowcase from "@/components/AxesShowcase";
 import FeaturedSeries from "@/components/FeaturedSeries";
@@ -13,8 +14,6 @@ import {
   getLatestPostPerAxis,
   getPublishedPostCount,
 } from "@/lib/sanity-data";
-
-const toArabic = (n: number) => n.toLocaleString("ar-EG");
 
 export default async function HomePage() {
   const [axes, series, years, publishers, feedByAxis, totalPosts] =
@@ -33,24 +32,24 @@ export default async function HomePage() {
     .map((x) => x.post!) // non-null asserted after filter
     .slice(0, 7);
 
-  const yearRange =
-    years.length > 0
-      ? `${toArabic(years[years.length - 1].year)}–${toArabic(years[0].year)}`
-      : "";
-
-  const heroStats = [
-    { value: toArabic(totalPosts), label: "مقالاً منشوراً" },
-    { value: "٧", label: "محاور فكرية" },
-    { value: toArabic(series.length), label: "سلاسل مقاليّة" },
-    { value: yearRange, label: "سنوات الأرشيف" },
+  // Three editorial credits, Latin digits for an instantly-legible scale.
+  const stats = [
+    { value: String(totalPosts), label: "مقالاً منشوراً" },
+    { value: "7", label: "محاور فكرية" },
+    { value: String(series.length), label: "سلاسل مقاليّة" },
   ];
 
   return (
     <>
-      <Hero stats={heroStats} />
+      <Hero />
 
       {/* ٠١ · المشروع الفكري */}
       <AxesShowcase axes={axes} />
+
+      {/* ─── Stats strip — placed between the axes and the feed so the
+          scale of the archive lands right as the reader is about to
+          scan the most recent writing. */}
+      <StatsStrip stats={stats} />
 
       {/* ٠٢ · مختارات — مقال حديث من كل محور */}
       {axisPosts.length > 0 && (
@@ -94,8 +93,6 @@ export default async function HomePage() {
               </Link>
             </div>
 
-            {/* Equal 3-col grid — no "featured" hierarchy, every axis
-                gets the same weight on the page. */}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {axisPosts.map((post) => (
                 <SanityPostCard key={post._id} post={post} />

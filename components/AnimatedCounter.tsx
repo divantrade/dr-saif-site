@@ -29,7 +29,7 @@ export default function AnimatedCounter({ value, duration = 1400 }: Props) {
   // Doing it inside the useState initialiser avoids any synchronous
   // setState in the effect, which the React purity lint flags.
   const [display, setDisplay] = useState<string>(() =>
-    numeric == null ? value : formatArabic(0)
+    numeric == null ? value : formatNumber(0)
   );
 
   useEffect(() => {
@@ -50,7 +50,7 @@ export default function AnimatedCounter({ value, duration = 1400 }: Props) {
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reducedMotion) {
       rafId = requestAnimationFrame(() =>
-        setDisplay(formatArabic(numeric))
+        setDisplay(formatNumber(numeric))
       );
       return () => cancelAnimationFrame(rafId);
     }
@@ -61,7 +61,7 @@ export default function AnimatedCounter({ value, duration = 1400 }: Props) {
       // ease-out cubic — fast start, gentle finish
       const eased = 1 - Math.pow(1 - progress, 3);
       const current = Math.round(numeric * eased);
-      setDisplay(formatArabic(current));
+      setDisplay(formatNumber(current));
       if (progress < 1 && !done) rafId = requestAnimationFrame(animate);
     };
 
@@ -111,7 +111,7 @@ function parseLeadingNumber(value: string): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-/** Format an integer using Arabic-Indic digits + comma. */
-function formatArabic(n: number): string {
-  return n.toLocaleString("ar-EG");
+/** Format an integer with Latin digits and thousands commas. */
+function formatNumber(n: number): string {
+  return n.toLocaleString("en-US");
 }
