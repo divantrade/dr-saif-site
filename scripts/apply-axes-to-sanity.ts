@@ -368,7 +368,6 @@ async function patchPosts(map: ReclassMap) {
 
   let patched = 0;
   let missing = 0;
-  let unchanged = 0;
 
   // Sanity transactions cap at ~500 mutations, so we batch.
   const BATCH = 100;
@@ -430,7 +429,6 @@ async function patchPosts(map: ReclassMap) {
 
   log(`\n  ✓ patched: ${patched}`);
   log(`  ⚠ missing: ${missing}`);
-  log(`  · unchanged: ${unchanged}`);
 }
 
 // ─── Main ──────────────────────────────────────────────────────────────────
