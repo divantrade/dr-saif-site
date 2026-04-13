@@ -120,16 +120,20 @@ async function paginatedFetch(
   perPage: number,
   cacheTags: string[]
 ): Promise<Paginated> {
-  const start = (page - 1) * perPage;
-  const end = start + perPage;
+  const offset = (page - 1) * perPage;
+  const limit = offset + perPage;
+  // Offsets are integers derived from validated inputs, so inline them
+  // into the query string. Keeping them out of `params` prevents
+  // accidental clashes with the caller's own filter parameters (e.g.
+  // getPaginatedPostsByYear uses $start / $end for the date range).
   const data = await sanityClient.fetch<{ total: number; posts: WPPost[] }>(
     `{
        "total": count(*[_type == "post" && ${filter}]),
        "posts": *[_type == "post" && ${filter}]
                   | order(publishedAt desc)
-                  [$start...$end] { ${POST_AS_WP_SHAPE} }
+                  [${offset}...${limit}] { ${POST_AS_WP_SHAPE} }
      }`,
-    { ...params, start, end },
+    params,
     { next: { revalidate: 600, tags: cacheTags } }
   );
   return {
