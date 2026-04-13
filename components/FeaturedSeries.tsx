@@ -26,7 +26,7 @@ export default function FeaturedSeries({ series, axes }: Props) {
         <div className="flex items-end justify-between gap-6 mb-12">
           <div className="max-w-2xl">
             <div className="flex items-center gap-3 mb-4 text-emerald-800">
-              <span className="font-display text-sm tabular-nums">٠٣</span>
+              <span className="font-display text-sm tabular-nums">٠٤</span>
               <span className="h-px w-12 bg-emerald-700/30" />
               <span className="text-[11px] tracking-[0.35em] uppercase">
                 السلاسل

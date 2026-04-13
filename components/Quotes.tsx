@@ -82,7 +82,7 @@ export default function Quotes() {
         <div className="flex items-end justify-between mb-14 md:mb-20">
           <div>
             <div className="flex items-center gap-3 mb-4 text-amber-400">
-              <span className="font-display text-sm tabular-nums">٠٤</span>
+              <span className="font-display text-sm tabular-nums">٠٥</span>
               <span className="h-px w-10 bg-amber-400/40" />
               <span className="text-[11px] tracking-[0.35em] uppercase text-amber-300/80">
                 شذرات

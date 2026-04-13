@@ -130,6 +130,32 @@ export interface YearSummary {
   count: number;
 }
 
+/**
+ * Book / monograph summary consumed by the homepage `BooksShowcase`
+ * and the `/books` page. `cover` is the raw Sanity image object so the
+ * `urlForImage` builder can size it on demand; it's `null` for the
+ * fallback hardcoded books (we render a coloured plate in its place).
+ */
+export interface BookSummary {
+  _id: string;
+  title: string;
+  subtitle: string | null;
+  slug: string | null;
+  year: number | null;
+  publisher: string | null;
+  cover: unknown | null;
+  coverAlt: string | null;
+  description: string | null;
+  /** Which axis the book belongs to — drives the fallback tile colour. */
+  axisNumber: number | null;
+  axisName: string | null;
+  axisSlug: string | null;
+  axisColor: string | null;
+  externalUrl: string | null;
+  /** True when the record came from the in-code fallback list, not Sanity. */
+  isFallback: boolean;
+}
+
 export function axisHref(slug: string): string {
   return `/axis/${encodeURIComponent(readableSlug(slug))}`;
 }

@@ -19,7 +19,7 @@ export default function ArchiveShortcut({ years, publishers }: Props) {
         {/* Section header */}
         <div className="max-w-3xl mb-12">
           <div className="flex items-center gap-3 mb-4 text-emerald-800">
-            <span className="font-display text-sm tabular-nums">٠٥</span>
+            <span className="font-display text-sm tabular-nums">٠٦</span>
             <span className="h-px w-12 bg-emerald-700/30" />
             <span className="text-[11px] tracking-[0.35em] uppercase">
               الأرشيف
