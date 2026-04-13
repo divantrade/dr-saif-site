@@ -1,0 +1,46 @@
+# Sanity dataset health check.
+#
+# Runs the verify:sanity script which inspects posts, axes, series and
+# cross-references. Fails the run if any hard check fails (e.g. posts
+# missing an axis ref, series with invalid axis), warns but passes for
+# soft issues.
+#
+# Triggers:
+#   - Manual (workflow_dispatch) — any time
+#   - Scheduled — daily at 06:00 UTC, as a regression guard
+#
+# Only needs read access, so SANITY_READ_TOKEN is optional (public
+# datasets work without a token).
+
+name: Verify Sanity
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * *"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify
+        env:
+          NEXT_PUBLIC_SANITY_PROJECT_ID: ${{ secrets.NEXT_PUBLIC_SANITY_PROJECT_ID }}
+          NEXT_PUBLIC_SANITY_DATASET: ${{ vars.NEXT_PUBLIC_SANITY_DATASET || 'production' }}
+          NEXT_PUBLIC_SANITY_API_VERSION: ${{ vars.NEXT_PUBLIC_SANITY_API_VERSION || '2026-04-12' }}
+          SANITY_READ_TOKEN: ${{ secrets.SANITY_READ_TOKEN }}
+        run: npm run verify:sanity
