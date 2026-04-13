@@ -6,6 +6,7 @@ import type {
   PublisherSummary,
   YearSummary,
   WPPost,
+  HomePost,
 } from "./types";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -282,4 +283,56 @@ export async function getNavData(): Promise<NavData> {
     getPublishers(),
   ]);
   return { axes, series, years, publishers };
+}
+
+// ─── Home feed (rich post shape for the homepage) ──────────────────────────
+
+const HOME_POST_PROJECTION = `
+  _id,
+  title,
+  "slug": slug.current,
+  "excerpt": coalesce(excerpt, ""),
+  publishedAt,
+  "sticky": coalesce(sticky, false),
+  featuredImage,
+  "imageAlt": featuredImage.alt,
+  "axis": axis-> {
+    name,
+    shortName,
+    "slug": slug.current,
+    color,
+    axisNumber
+  },
+  "series": series-> {
+    name,
+    "slug": slug.current
+  },
+  seriesNumber
+`;
+
+/**
+ * Fetch the top N posts for the homepage — sticky posts first, then newest.
+ * Sanity-native shape (HomePost) with axis + series joined in.
+ */
+export async function getHomeFeed(limit: number): Promise<HomePost[]> {
+  return sanityClient.fetch<HomePost[]>(
+    `*[_type == "post" && defined(publishedAt)]
+       | order(coalesce(sticky, false) desc, publishedAt desc)
+       [0...$limit] {
+         ${HOME_POST_PROJECTION}
+       }`,
+    { limit },
+    { next: { revalidate: 300, tags: ["posts", "home"] } }
+  );
+}
+
+/**
+ * Fetch the total published post count. Used for the hero stats strip.
+ */
+export async function getPublishedPostCount(): Promise<number> {
+  return sanityClient.fetch<number>(
+    `count(*[_type == "post" && defined(publishedAt)])`,
+    {},
+    { next: { revalidate: 1800, tags: ["posts"] } }
+  );
 }

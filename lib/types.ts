@@ -141,3 +141,38 @@ export function seriesHref(slug: string): string {
 export function yearHref(year: number): string {
   return `/archive/year/${year}`;
 }
+
+// ─── Home feed (Sanity-native rich post shape) ──────────────────────────────
+
+/**
+ * A post as consumed by the homepage & card components. Carries the axis
+ * + series inline so the card can render the thematic badge without a
+ * second round-trip. `featuredImage` is the raw Sanity image object so
+ * the `urlForImage` builder can generate sized URLs on demand.
+ */
+export interface HomePost {
+  _id: string;
+  title: string;
+  slug: string;
+  excerpt: string;
+  publishedAt: string;
+  sticky: boolean;
+  featuredImage: unknown | null;
+  imageAlt: string | null;
+  axis: {
+    name: string;
+    shortName: string | null;
+    slug: string;
+    color: string | null;
+    axisNumber: number;
+  } | null;
+  series: {
+    name: string;
+    slug: string;
+  } | null;
+  seriesNumber: number | null;
+}
+
+export function postHref(slug: string): string {
+  return `/blog/${encodeURIComponent(readableSlug(slug))}`;
+}
