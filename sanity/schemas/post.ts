@@ -170,12 +170,43 @@ export const post = defineType({
     }),
 
     // ─── Taxonomy ─────────────────────────────────────────────────────────
+    // The new thematic taxonomy (axis + series) sits *next to* the legacy
+    // category/tag taxonomy — both are preserved so existing URLs keep
+    // working and SEO is not disrupted.
+    defineField({
+      name: "axis",
+      title: "المحور الفكري",
+      type: "reference",
+      to: [{ type: "intellectualAxis" }],
+      group: "taxonomy",
+      description:
+        "أحد المحاور السبعة للمشروع الفكري. كل مقال ينتمي لمحور واحد.",
+    }),
+    defineField({
+      name: "series",
+      title: "السلسلة",
+      type: "reference",
+      to: [{ type: "series" }],
+      group: "taxonomy",
+      description: "إذا كان المقال جزءاً من سلسلة مرقّمة.",
+    }),
+    defineField({
+      name: "seriesNumber",
+      title: "رقم الحلقة في السلسلة",
+      type: "number",
+      group: "taxonomy",
+      hidden: ({ document }) => !document?.series,
+      description: "ترتيب الحلقة داخل السلسلة (1, 2, 3, …).",
+      validation: (r) => r.integer().min(1),
+    }),
     defineField({
       name: "categories",
-      title: "التصنيفات",
+      title: "التصنيفات (قديمة — للحفاظ على الـ URLs)",
       type: "array",
       group: "taxonomy",
       of: [{ type: "reference", to: [{ type: "category" }] }],
+      description:
+        "تصنيفات WordPress الأصلية. لا تُحذف لأنها تحدّد روابط /category/[slug] التي تحافظ على ترتيب الموقع في Google.",
     }),
     defineField({
       name: "tags",
