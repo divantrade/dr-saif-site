@@ -4,7 +4,11 @@ import type { SanityImageSource } from "@sanity/image-url";
 import type { HomePost } from "@/lib/types";
 import { postHref, seriesHref, formatDate } from "@/lib/types";
 import { urlForImage } from "@/sanity/image";
-import { axisColors, axisColorByNumber } from "./AxisBadge";
+import {
+  axisColors,
+  axisColorByNumber,
+  type AxisColorClasses,
+} from "./AxisBadge";
 
 interface SanityPostCardProps {
   post: HomePost;
@@ -14,9 +18,9 @@ interface SanityPostCardProps {
 
 /**
  * Post card that reads Sanity-native post data (HomePost) directly.
- * Replaces the WP-JSON-backed PostCard for the new homepage so images
- * come from Sanity's asset CDN and the axis badge can be drawn inline
- * without a second round-trip.
+ * When no featured image is available, the visual well is filled with
+ * the post's axis colour + a subtle Islamic-geometric pattern so every
+ * card keeps a clear visual identity.
  */
 export default function SanityPostCard({
   post,
@@ -43,9 +47,9 @@ export default function SanityPostCard({
         featured ? "md:col-span-2 md:grid md:grid-cols-2" : "flex flex-col"
       }`}
     >
-      {/* Thumbnail */}
+      {/* Thumbnail / axis-coloured backdrop */}
       <div
-        className={`relative overflow-hidden bg-gradient-to-br from-stone-100 to-stone-50 ${
+        className={`relative overflow-hidden ${
           featured ? "md:h-full h-64" : "h-48"
         }`}
       >
@@ -62,7 +66,11 @@ export default function SanityPostCard({
             }
           />
         ) : (
-          <PlaceholderMark />
+          <AxisBackdrop
+            axisColor={axisC}
+            axisName={post.axis?.shortName || post.axis?.name || null}
+            axisNumber={post.axis?.axisNumber ?? null}
+          />
         )}
 
         {/* Sticky badge */}
@@ -163,22 +171,58 @@ export default function SanityPostCard({
   );
 }
 
-function PlaceholderMark() {
+/**
+ * Replaces the grey "no image" placeholder with a coloured well that
+ * carries the axis identity. Background gradient = axis colour; the
+ * overlaid Islamic-geometric pattern matches the Waqf al-Qalam CTA
+ * section so the whole site shares one visual vocabulary.
+ */
+function AxisBackdrop({
+  axisColor,
+  axisName,
+  axisNumber,
+}: {
+  axisColor: AxisColorClasses | null;
+  axisName: string | null;
+  axisNumber: number | null;
+}) {
+  const gradient = axisColor?.gradient ?? "from-stone-600 to-stone-800";
+
   return (
-    <div className="w-full h-full flex items-center justify-center">
-      <svg
-        className="w-14 h-14 text-stone-300"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-        strokeWidth={1.4}
-      >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"
-        />
-      </svg>
+    <div
+      className={`relative w-full h-full bg-gradient-to-br ${gradient} overflow-hidden`}
+    >
+      {/* Islamic-geometric pattern — matches the Waqf CTA motif. */}
+      <div
+        className="absolute inset-0 opacity-[0.18]"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M30 0l10 20 20 10-20 10-10 20-10-20L0 30l20-10z' fill='%23ffffff'/%3E%3C/svg%3E\")",
+          backgroundSize: "72px 72px",
+        }}
+        aria-hidden
+      />
+
+      {/* Axis number watermark — big, editorial, corner-placed. */}
+      {axisNumber != null && (
+        <span
+          className="absolute -top-2 -left-2 font-display font-bold text-white/15 leading-none select-none pointer-events-none tabular-nums"
+          style={{ fontSize: "10rem" }}
+          aria-hidden
+        >
+          {axisNumber}
+        </span>
+      )}
+
+      {/* Bottom editorial caption */}
+      {axisName && (
+        <div className="absolute bottom-4 right-4 left-4 flex items-center gap-2 text-white/80">
+          <span className="h-px flex-1 bg-white/30" />
+          <span className="text-[10px] tracking-[0.35em] uppercase font-semibold">
+            {axisName}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

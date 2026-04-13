@@ -9,13 +9,13 @@ interface Props {
 }
 
 /**
- * Featured series spotlight — shows the 4 series flagged as `featured`
- * in Sanity, each wearing the colour of its parent axis. Sits between
- * the latest-posts grid and the quote wall on the homepage.
+ * Series spotlight — shows every series Dr. Saif maintains, sorted by
+ * episode count descending so the largest columns lead. Each card
+ * wears the colour of its parent axis.
  */
 export default function FeaturedSeries({ series, axes }: Props) {
-  const featured = series.filter((s) => s.featured);
-  if (featured.length === 0) return null;
+  const sorted = [...series].sort((a, b) => b.postCount - a.postCount);
+  if (sorted.length === 0) return null;
 
   const axesByNumber = new Map(axes.map((a) => [a.axisNumber, a]));
 
@@ -36,7 +36,7 @@ export default function FeaturedSeries({ series, axes }: Props) {
               الكتابات في حلقات
             </h2>
             <p className="text-base md:text-lg text-stone-600 leading-[2]">
-              أعمدة أسبوعية و مشاريع مقاليّة مرقَّمة، تتراكم حلقة بعد حلقة
+              أعمدة ممتدّة و مشاريع مقاليّة مرقَّمة، تتراكم حلقة بعد حلقة
               لتُحكم بناء أطروحة متكاملة حول قضية واحدة.
             </p>
           </div>
@@ -44,7 +44,7 @@ export default function FeaturedSeries({ series, axes }: Props) {
             href="/series"
             className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-800 hover:text-emerald-950 border-b border-emerald-700/30 hover:border-emerald-700 pb-0.5 transition-colors shrink-0"
           >
-            كل السلاسل
+            فهرس السلاسل
             <svg
               className="w-3.5 h-3.5"
               fill="none"
@@ -61,9 +61,9 @@ export default function FeaturedSeries({ series, axes }: Props) {
           </Link>
         </div>
 
-        {/* Grid */}
-        <ul className="grid gap-5 md:grid-cols-2 xl:grid-cols-4">
-          {featured.map((s) => {
+        {/* Grid — 2 cols on tablet, 3 cols on lg+ so 6 series fit in 2×3 */}
+        <ul className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {sorted.map((s) => {
             const ax = axesByNumber.get(s.axisNumber);
             const c = ax?.color
               ? axisColors(ax.color)

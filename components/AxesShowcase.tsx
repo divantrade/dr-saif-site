@@ -8,15 +8,18 @@ interface Props {
 }
 
 /**
- * Flagship section on the homepage — introduces the 7-axis thematic
- * framework that organises the site. Card-based, editorial, each axis
- * rendered with its own accent colour. An 8th "enter all axes" tile
- * rounds out the grid to a clean 2×4 on xl screens.
+ * The seven thematic axes that organise the project. Rendered in a
+ * 4 + 3 editorial layout on large screens — second row is width-capped
+ * and centered so every card keeps the same width as row one without
+ * leaving an empty cell. Stacks to 2×2×2×1 on tablets, single column
+ * on phones.
  */
 export default function AxesShowcase({ axes }: Props) {
+  const firstRow = axes.slice(0, 4);
+  const secondRow = axes.slice(4, 7);
+
   return (
     <section className="relative bg-white">
-      {/* subtle top separator */}
       <div className="h-px bg-gradient-to-l from-transparent via-stone-200 to-transparent" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-24">
@@ -33,23 +36,33 @@ export default function AxesShowcase({ axes }: Props) {
             سبعة محاور — قراءة واحدة
           </h2>
           <p className="text-base md:text-lg text-stone-600 leading-[2] max-w-2xl">
-            يُعاد توزيع كتابات الدكتور على سبعة محاور تعكس وحدة مشروعه
-            الحضاري، بدل التصنيف التقليدي بحسب منصّة النشر. ادخل من البوّابة
-            التي تناسب سؤالك.
+            سبعة محاور تتقاطع و تتكامل — من التأسيس المنهجي إلى المقاومة
+            الحضارية — لتُشكّل رؤية واحدة تقرأ الواقع العربي و الإسلامي
+            من منظور حضاري.
           </p>
         </div>
 
-        {/* 7 axes + 1 aggregate tile = clean 2×4 on xl */}
-        <ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-          {axes.map((a) => (
+        {/* Row 1 — first four axes */}
+        <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          {firstRow.map((a) => (
             <li key={a._id}>
               <AxisCard axis={a} />
             </li>
           ))}
-          <li>
-            <AllAxesTile />
-          </li>
-        </ol>
+        </ul>
+
+        {/* Row 2 — remaining three, same card width as row one
+            (3-col grid at 75% of the container). Falls back to 2/1
+            columns on smaller viewports. */}
+        {secondRow.length > 0 && (
+          <ul className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:w-3/4 lg:mx-auto mt-5">
+            {secondRow.map((a) => (
+              <li key={a._id}>
+                <AxisCard axis={a} />
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </section>
   );
@@ -65,13 +78,11 @@ function AxisCard({ axis }: { axis: AxisSummary }) {
       href={axisHref(axis.slug)}
       className={`group relative flex flex-col h-full rounded-2xl border ${c.border} bg-white p-6 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl`}
     >
-      {/* Coloured edge ribbon */}
       <div
         className={`absolute inset-y-0 right-0 w-1.5 bg-gradient-to-b ${c.gradient}`}
         aria-hidden
       />
 
-      {/* Axis number — dominant editorial figure */}
       <div className="flex items-baseline gap-3 mb-4">
         <span
           className={`font-display font-bold text-5xl leading-none tabular-nums ${c.text}`}
@@ -83,7 +94,6 @@ function AxisCard({ axis }: { axis: AxisSummary }) {
         </span>
       </div>
 
-      {/* Name + tagline */}
       <h3 className="font-display font-bold text-xl text-stone-900 leading-snug mb-2 group-hover:text-emerald-800 transition-colors">
         {axis.name}
       </h3>
@@ -93,7 +103,6 @@ function AxisCard({ axis }: { axis: AxisSummary }) {
         </p>
       )}
 
-      {/* Footer: count + arrow */}
       <div className="mt-auto flex items-center justify-between pt-4 border-t border-stone-100">
         <span className={`text-xs font-semibold tabular-nums ${c.text}`}>
           {axis.postCount.toLocaleString("ar-EG")} مقال
@@ -102,61 +111,6 @@ function AxisCard({ axis }: { axis: AxisSummary }) {
           className={`flex items-center gap-1 text-xs font-medium ${c.text} translate-x-0 group-hover:-translate-x-1 transition-transform`}
         >
           استعرض
-          <svg
-            className="w-3.5 h-3.5"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
-        </span>
-      </div>
-    </Link>
-  );
-}
-
-function AllAxesTile() {
-  return (
-    <Link
-      href="/axis"
-      className="group relative flex flex-col h-full rounded-2xl border border-stone-900/90 bg-stone-900 text-white p-6 overflow-hidden transition-all duration-300 hover:-translate-y-1 hover:shadow-xl"
-    >
-      <div
-        className="absolute inset-0 opacity-[0.08]"
-        style={{
-          backgroundImage:
-            "url(\"data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 0l15 35 35 15-35 15-15 35-15-35L0 50l35-15z' fill='%23fef3c7'/%3E%3C/svg%3E\")",
-        }}
-        aria-hidden
-      />
-
-      <div className="relative flex items-baseline gap-3 mb-4">
-        <span className="font-display font-bold text-5xl leading-none tabular-nums text-amber-300">
-          ٧
-        </span>
-        <span className="text-[10px] tracking-[0.35em] uppercase text-amber-200/80">
-          محاور
-        </span>
-      </div>
-      <h3 className="relative font-display font-bold text-xl leading-snug mb-2">
-        استعراض كل المحاور
-      </h3>
-      <p className="relative text-sm text-stone-300 leading-relaxed mb-5">
-        انتقل إلى الصفحة الكاملة للمشروع الفكري و تعرّف على كل محور.
-      </p>
-
-      <div className="relative mt-auto flex items-center justify-between pt-4 border-t border-white/10">
-        <span className="text-xs font-semibold text-amber-300">
-          المشروع بأكمله
-        </span>
-        <span className="flex items-center gap-1 text-xs font-medium text-amber-200 translate-x-0 group-hover:-translate-x-1 transition-transform">
-          ادخل
           <svg
             className="w-3.5 h-3.5"
             fill="none"
