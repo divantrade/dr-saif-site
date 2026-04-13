@@ -1,65 +1,67 @@
 /**
- * Editorial "quote wall" — a single massive hero quote followed by a
- * visually varied arrangement of smaller ones. Dark, cinematic ground
- * so the typography really lands. Each card gets its own typographic
- * treatment and scale so the section reads like a curated gallery
- * rather than a uniform grid.
+ * Editorial quote wall. A single hero quote leads the section, followed
+ * by a clean 2×2 grid of smaller ones. Each quote carries a coloured
+ * edge rule from the axis it belongs to — the same palette used in
+ * the header, footer and axis pages — so the reader recognises the
+ * thematic family at a glance.
  */
 
 import Link from "next/link";
+import { axisColorByNumber, type AxisColorClasses } from "./AxisBadge";
 
 interface Quote {
   text: string;
   source: string;
   slug?: string;
-  theme: "استراتيجيا" | "منهاج" | "تغيير" | "استبداد" | "تراث" | "استشراف";
+  /** Which axis this quote belongs to — drives the accent colour. */
+  axisNumber: 1 | 2 | 3 | 4 | 5 | 6 | 7;
 }
 
-const QUOTES: Quote[] = [
+/**
+ * The hero quote sits alone at the top of the section (previously lived
+ * inside the hero itself). The four below form a 2×2 grid that feels
+ * calm and deliberate rather than scattered.
+ */
+const HERO_QUOTE: Quote = {
+  text:
+    "المنظور الحضاري ليس زاوية نظر فرعية، بل هو الإطار الكلّي الذي يُعيد " +
+    "ترتيب السؤال قبل أن يجترح الجواب.",
+  source: "في المنظور الحضاري الإسلامي: رؤى منهاجية",
+  axisNumber: 1, // التأسيس الحضاري
+};
+
+const WALL_QUOTES: Quote[] = [
   {
-    text: "المنظور الحضاري ليس زاوية نظر فرعية، بل هو الإطار الكلّي الذي يُعيد ترتيب السؤال قبل أن يجترح الجواب.",
-    source: "في المنظور الحضاري الإسلامي: رؤى منهاجية",
-    theme: "منهاج",
+    text:
+      "إن هذه الأمة تحتاج إلى عقل استراتيجي يجمع بين الإرادة و الإدارة، " +
+      "قادر على التفكير و التدبير و التغيير و التأثير.",
+    source: "عقل استراتيجي و التغيّر القادم",
+    axisNumber: 3, // النهوض و الإصلاح
   },
   {
-    text: "إن هذه الأمة تحتاج إلى عقل استراتيجي يجمع بين الإرادة والإدارة، قادر على التفكير والتدبير والتغيير والتأثير.",
-    source: "عقل استراتيجي والتغير القادم",
-    theme: "استراتيجيا",
-  },
-  {
-    text: "لا تنهض الأمم بالردّ على خصومها، بل بتجديد وعيها بذاتها، وإدراك سنن تدافعها، وبناء كياناتها المقاومة.",
+    text:
+      "لا تنهض الأمم بالردّ على خصومها، بل بتجديد وعيها بذاتها، و إدراك " +
+      "سنن تدافعها، و بناء كياناتها المقاوِمة.",
     source: "مشاتل التغيير",
-    theme: "تغيير",
+    axisNumber: 3,
   },
   {
-    text: "الاستشراف عملية شاقة، تحفّها مخاطر محاكمة الواقع؛ إلا أنّ هذه الضغوط يجب ألّا تمنعنا من دراسة مشكلاته بغية تقويمها.",
-    source: "مستقبل الثورات العربية بين معارك الذاكرة والمعنى",
-    theme: "استشراف",
-  },
-  {
-    text: "التراث قراءة للواقع لا ثقلاً عليه، والاجتهاد يقظة دائمة تُحيي المعنى في كل زمن.",
+    text:
+      "التراث قراءة للواقع لا ثقلاً عليه، و الاجتهاد يقظة دائمة تُحيي " +
+      "المعنى في كل زمن.",
     source: "سؤال التراث",
-    theme: "تراث",
+    axisNumber: 2,
   },
   {
-    text: "الظلم يستنزف طاقات الأمة حتى في شعورها بذاتها؛ وكسر هذا الحاجز أوّل خطوات الاستعادة.",
+    text:
+      "الظلم يستنزف طاقات الأمة حتى في شعورها بذاتها؛ و كسر هذا الحاجز " +
+      "أوّل خطوات الاستعادة.",
     source: "الاستبداد",
-    theme: "استبداد",
+    axisNumber: 4,
   },
 ];
 
-const THEME_STYLES: Record<Quote["theme"], string> = {
-  استراتيجيا: "text-amber-300",
-  منهاج: "text-emerald-300",
-  تغيير: "text-rose-300",
-  استبداد: "text-orange-300",
-  تراث: "text-teal-300",
-  استشراف: "text-indigo-300",
-};
-
 export default function Quotes() {
-  const [hero, ...rest] = QUOTES;
-
   return (
     <section className="relative bg-stone-950 text-white overflow-hidden">
       {/* Soft radial glow */}
@@ -80,7 +82,7 @@ export default function Quotes() {
         <div className="flex items-end justify-between mb-14 md:mb-20">
           <div>
             <div className="flex items-center gap-3 mb-4 text-amber-400">
-              <span className="font-display text-sm tabular-nums">۰۲</span>
+              <span className="font-display text-sm tabular-nums">٠٤</span>
               <span className="h-px w-10 bg-amber-400/40" />
               <span className="text-[11px] tracking-[0.35em] uppercase text-amber-300/80">
                 شذرات
@@ -90,56 +92,47 @@ export default function Quotes() {
               من كلامه
             </h2>
           </div>
-          <div className="hidden md:block text-xs tracking-[0.3em] uppercase text-stone-500 text-left max-w-[14rem]">
-            اخترناها من أرشيف ۱۱۶۱ مقالاً — تُمثّل مسار مشروعه الفكري
+          <div className="hidden md:block text-xs tracking-[0.3em] uppercase text-stone-500 text-left max-w-[16rem]">
+            مقتطفات من أرشيف الكتابات — تُعبّر عن مداخل المشروع الفكري
           </div>
         </div>
 
-        {/* The hero quote — takes the full width with massive typography */}
-        <HeroQuote quote={hero} />
+        {/* Hero quote — single, full-width, editorial */}
+        <HeroQuote quote={HERO_QUOTE} />
 
-        {/* Staggered grid of smaller quotes, deliberately non-uniform */}
-        <div className="mt-16 md:mt-20 grid grid-cols-12 gap-6 md:gap-8">
-          {/* Left tall quote */}
-          <div className="col-span-12 md:col-span-7">
-            <WallQuote quote={rest[0]} size="lg" align="start" />
-          </div>
-          {/* Right short quote */}
-          <div className="col-span-12 md:col-span-5 md:pt-8">
-            <WallQuote quote={rest[1]} size="md" align="start" />
-          </div>
-          {/* Right tall */}
-          <div className="col-span-12 md:col-span-5 md:col-start-8 md:-mt-4">
-            <WallQuote quote={rest[2]} size="md" align="start" />
-          </div>
-          {/* Left short, offset */}
-          <div className="col-span-12 md:col-span-6 md:pt-12">
-            <WallQuote quote={rest[3]} size="md" align="start" />
-          </div>
-          {/* Spanning bottom */}
-          <div className="col-span-12 md:col-span-11 md:col-start-2">
-            <WallQuote quote={rest[4]} size="lg" align="end" />
-          </div>
+        {/* 2 × 2 orderly grid of smaller quotes */}
+        <div className="mt-16 md:mt-20 grid gap-8 md:gap-10 md:grid-cols-2">
+          {WALL_QUOTES.map((q, i) => (
+            <WallQuote key={i} quote={q} />
+          ))}
         </div>
       </div>
 
-      {/* Bottom edge gold rule */}
+      {/* Bottom gold rule */}
       <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-400/30 to-transparent" />
     </section>
   );
 }
 
-/** The featured, full-width quote at the top of the section. */
+function quoteColor(q: Quote): AxisColorClasses {
+  return axisColorByNumber(q.axisNumber);
+}
+
+/** Hero quote at the top of the section. */
 function HeroQuote({ quote }: { quote: Quote }) {
+  const c = quoteColor(quote);
+  const glow = accentHex(c);
+
   return (
     <figure className="relative">
-      {/* Giant decorative quotation mark */}
+      {/* Giant decorative bracket */}
       <div className="absolute -top-6 -right-2 md:-right-8 font-display text-amber-500/25 text-[12rem] md:text-[16rem] leading-none select-none pointer-events-none">
         ﴿
       </div>
 
       <blockquote
-        className={`relative font-display font-bold leading-[1.4] text-2xl sm:text-3xl md:text-4xl lg:text-5xl max-w-5xl ${THEME_STYLES[quote.theme]}`}
+        className="relative font-display font-bold leading-[1.4] text-2xl sm:text-3xl md:text-4xl lg:text-5xl max-w-5xl"
+        style={{ color: glow }}
       >
         {quote.text}
       </blockquote>
@@ -163,51 +156,15 @@ function HeroQuote({ quote }: { quote: Quote }) {
   );
 }
 
-/** Non-uniform quote card — varies by size and alignment. */
-function WallQuote({
-  quote,
-  size,
-  align,
-}: {
-  quote: Quote;
-  size: "md" | "lg";
-  align: "start" | "end";
-}) {
-  const textSize =
-    size === "lg"
-      ? "text-xl md:text-2xl lg:text-3xl"
-      : "text-lg md:text-xl";
-
+/** One card in the orderly 2×2 grid. */
+function WallQuote({ quote }: { quote: Quote }) {
+  const c = quoteColor(quote);
   return (
     <figure
-      className={`relative ${align === "end" ? "text-left md:pl-10" : "text-right md:pr-10"}`}
+      className="relative pr-6 md:pr-8"
+      style={{ borderRight: `3px solid ${accentHex(c)}` }}
     >
-      {/* Accent bar */}
-      <div
-        className={`absolute top-1 bottom-1 w-[2px] ${align === "end" ? "left-0" : "right-0"} ${
-          quote.theme === "استراتيجيا"
-            ? "bg-amber-400/60"
-            : quote.theme === "منهاج"
-              ? "bg-emerald-400/60"
-              : quote.theme === "تغيير"
-                ? "bg-rose-400/60"
-                : quote.theme === "استبداد"
-                  ? "bg-orange-400/60"
-                  : quote.theme === "تراث"
-                    ? "bg-teal-400/60"
-                    : "bg-indigo-400/60"
-        }`}
-      />
-
-      <div className="mb-3">
-        <span className={`text-[11px] tracking-[0.3em] uppercase ${THEME_STYLES[quote.theme]} opacity-80`}>
-          {quote.theme}
-        </span>
-      </div>
-
-      <blockquote
-        className={`font-display ${textSize} leading-[1.7] text-stone-100`}
-      >
+      <blockquote className="font-display text-lg md:text-xl lg:text-2xl leading-[1.75] text-stone-100">
         {quote.text}
       </blockquote>
 
@@ -226,3 +183,26 @@ function WallQuote({
     </figure>
   );
 }
+
+/**
+ * Pull a hex colour from the axis palette for the inline `style` prop
+ * (needed because the accent edge on the dark ground looks best in the
+ * axis's brand colour at full saturation, not a Tailwind `text-*-300`).
+ */
+function accentHex(c: AxisColorClasses): string {
+  // Map back from Tailwind class → hex. If the palette changes, edit here.
+  const map: Record<string, string> = {
+    "bg-emerald-600": "#059669",
+    "bg-sky-600": "#0284c7",
+    "bg-violet-600": "#7c3aed",
+    "bg-red-600": "#dc2626",
+    "bg-amber-600": "#d97706",
+    "bg-orange-600": "#ea580c",
+    "bg-lime-600": "#65a30d",
+    "bg-indigo-600": "#4f46e5",
+    "bg-rose-600": "#e11d48",
+    "bg-teal-600": "#0d9488",
+  };
+  return map[c.dot] ?? "#d97706"; // amber-600 default
+}
+

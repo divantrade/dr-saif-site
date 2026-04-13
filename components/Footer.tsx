@@ -1,14 +1,13 @@
 import Link from "next/link";
-import { getAxes, getPostYears } from "@/lib/sanity-data";
-import { axisHref, yearHref } from "@/lib/types";
+import { getAxes, getPostYears, getSeriesList } from "@/lib/sanity-data";
+import { axisHref, seriesHref, yearHref } from "@/lib/types";
 import { axisColors, axisColorByNumber } from "./AxisBadge";
 import SocialLinks from "./SocialLinks";
 
 const QUICK_LINKS: { href: string; label: string }[] = [
   { href: "/", label: "الرئيسية" },
   { href: "/blog", label: "جميع المقالات" },
-  { href: "/series", label: "السلاسل" },
-  { href: "/books", label: "الكتب والدراسات" },
+  { href: "/books", label: "الكتب و الدراسات" },
   { href: "/podcast", label: "بودكاست" },
   { href: "/videos", label: "فيديوهات" },
   { href: "/waqf-alqalam", label: "وقف القلم" },
@@ -18,17 +17,23 @@ const QUICK_LINKS: { href: string; label: string }[] = [
 ];
 
 /**
- * 4-column footer (spec ratio: 2 / 1.5 / 1 / 1.5) on `lg`, stacking on
- * smaller screens. Column 2 mirrors the 7 thematic axes with colour dots
- * that match the header. Column 4 is a compact year-archive grid.
+ * 5-column footer on lg+: brand · axes · series · quick links · years.
+ * Stacks gracefully on smaller screens (md = 2 cols, base = 1).
+ * Every column heading wears a short emerald rule for visual rhythm.
  */
 export default async function Footer() {
-  const [axes, years] = await Promise.all([getAxes(), getPostYears()]);
+  const [axes, series, years] = await Promise.all([
+    getAxes(),
+    getSeriesList(),
+    getPostYears(),
+  ]);
+
+  const seriesSorted = [...series].sort((a, b) => b.postCount - a.postCount);
 
   return (
     <footer className="bg-gray-900 text-gray-300 mt-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1.5fr_1fr_1.5fr] gap-10 lg:gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-[2fr_1.4fr_1.4fr_1fr_1.3fr] gap-10 lg:gap-12">
           {/* Col 1 — Brand */}
           <div>
             <div className="flex items-center gap-3 mb-5">
@@ -52,7 +57,7 @@ export default async function Footer() {
             </p>
             <SocialLinks
               className="gap-3"
-              iconClassName="w-9! h-9! rounded-lg! border-transparent! bg-white/[0.08] hover:bg-white/[0.15]! text-gray-400 hover:text-white"
+              iconClassName="w-10! h-10! rounded-lg! border-transparent! bg-white/[0.08] hover:bg-white/[0.18]! text-gray-300 hover:text-white hover:scale-110! transition-all"
             />
           </div>
 
@@ -82,7 +87,27 @@ export default async function Footer() {
             </ul>
           </div>
 
-          {/* Col 3 — Quick links */}
+          {/* Col 3 — Series */}
+          <div>
+            <ColumnTitle>السلاسل المقاليّة</ColumnTitle>
+            <ul className="space-y-[0.35rem]">
+              {seriesSorted.map((s) => (
+                <li key={s._id}>
+                  <Link
+                    href={seriesHref(s.slug)}
+                    className="group inline-flex items-baseline gap-2 text-[0.8rem] text-gray-400 hover:text-white leading-[2.2] transition-colors"
+                  >
+                    <span className="truncate">{s.name}</span>
+                    <span className="text-[0.65rem] text-gray-600 tabular-nums shrink-0">
+                      {s.postCount}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Col 4 — Quick links */}
           <div>
             <ColumnTitle>روابط سريعة</ColumnTitle>
             <ul className="space-y-[0.35rem]">
@@ -99,7 +124,7 @@ export default async function Footer() {
             </ul>
           </div>
 
-          {/* Col 4 — Year archive */}
+          {/* Col 5 — Year archive */}
           <div>
             <ColumnTitle>تصفّح بالسنة</ColumnTitle>
             <ul className="grid grid-cols-2 gap-1.5">
@@ -107,13 +132,13 @@ export default async function Footer() {
                 <li key={y.year}>
                   <Link
                     href={yearHref(y.year)}
-                    className="group block text-center py-2 px-2 rounded-md bg-white/[0.05] hover:bg-white/[0.1] transition-colors"
+                    className="group block text-center py-2 px-2 rounded-md bg-white/[0.05] hover:bg-white/[0.12] hover:scale-105 transition-all duration-200"
                   >
                     <div className="text-[0.82rem] font-semibold text-gray-300 group-hover:text-white tabular-nums">
                       {y.year}
                     </div>
                     <div className="text-[0.65rem] text-gray-500 tabular-nums mt-0.5">
-                      {y.count} مقال
+                      {y.count}
                     </div>
                   </Link>
                 </li>
@@ -141,7 +166,7 @@ function ColumnTitle({ children }: { children: React.ReactNode }) {
       </h3>
       <span
         aria-hidden
-        className="block w-8 h-[2px] bg-emerald-600 rounded-full"
+        className="block w-10 h-[2px] bg-gradient-to-l from-emerald-500 to-emerald-700 rounded-full"
       />
     </div>
   );

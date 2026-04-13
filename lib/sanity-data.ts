@@ -336,3 +336,36 @@ export async function getPublishedPostCount(): Promise<number> {
     { next: { revalidate: 1800, tags: ["posts"] } }
   );
 }
+
+/**
+ * For every axis, return the most recent published post in that axis.
+ * Drives the homepage "مختارات من المحاور" feed — one recent piece per
+ * axis, so the section showcases the breadth of the project rather
+ * than a burst of recent posts from the same theme.
+ */
+export async function getLatestPostPerAxis(): Promise<
+  {
+    axisNumber: number;
+    axisName: string;
+    axisShortName: string | null;
+    axisSlug: string;
+    axisColor: string | null;
+    post: HomePost | null;
+  }[]
+> {
+  return sanityClient.fetch(
+    `*[_type == "intellectualAxis"] | order(axisNumber asc) {
+       "axisNumber": axisNumber,
+       "axisName": name,
+       "axisShortName": shortName,
+       "axisSlug": slug.current,
+       "axisColor": color,
+       "post": *[_type == "post" && references(^._id) && defined(publishedAt)]
+         | order(publishedAt desc)[0] {
+           ${HOME_POST_PROJECTION}
+         }
+     }`,
+    {},
+    { next: { revalidate: 300, tags: ["posts", "home", "axes"] } }
+  );
+}
