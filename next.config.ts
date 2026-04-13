@@ -10,6 +10,13 @@ const nextConfig: NextConfig = {
         pathname: "/wp-content/uploads/**",
       },
       {
+        // Bare-hostname variant — some legacy posts inline images with
+        // `https://saifabdelfattah.net/...` rather than `www.`.
+        protocol: "https",
+        hostname: "saifabdelfattah.net",
+        pathname: "/wp-content/uploads/**",
+      },
+      {
         protocol: "https",
         hostname: "i.ytimg.com",
         pathname: "/**",

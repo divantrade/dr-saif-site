@@ -358,3 +358,97 @@ export async function getMediaById(
   const media = await loadMedia();
   return media.find((m) => m.id === id);
 }
+
+// ─── Sanity fallback image resolution ───────────────────────────────────────
+// Sanity posts migrated from WordPress sometimes lack a `featuredImage`
+// (the migration only managed to port covers for a subset). For those
+// posts, the WordPress-era JSON still has the real image — either as a
+// `featured_media` id (→ `media.json`) or as an `<img>` inline in the
+// HTML body. Listing components call `getFallbackImageForSlug` so every
+// card renders with the right cover even when the Sanity doc is bare.
+
+let slugToPostMap: Map<string, WPPost> | null = null;
+let mediaByIdMap: Map<number, WPMedia> | null = null;
+
+async function loadSlugToPostMap(): Promise<Map<string, WPPost>> {
+  if (slugToPostMap) return slugToPostMap;
+  const posts = await loadPosts();
+  const map = new Map<string, WPPost>();
+  for (const p of posts) {
+    // WP slugs are URL-encoded with lowercase hex. Sanity preserves the
+    // same casing, so a direct key match works; but we also index the
+    // decoded form in case the caller passes Arabic.
+    map.set(p.slug, p);
+    map.set(decodeURIComponent(p.slug), p);
+  }
+  slugToPostMap = map;
+  return map;
+}
+
+async function loadMediaByIdMap(): Promise<Map<number, WPMedia>> {
+  if (mediaByIdMap) return mediaByIdMap;
+  const media = await loadMedia();
+  mediaByIdMap = new Map(media.map((m) => [m.id, m]));
+  return mediaByIdMap;
+}
+
+/**
+ * Domains that `next/image` is configured to allow (see
+ * `next.config.ts`). Any fallback image we return must come from one of
+ * these hosts, otherwise the Image component will throw at render.
+ */
+const ALLOWED_IMAGE_HOSTS = new Set([
+  "www.saifabdelfattah.net",
+  "saifabdelfattah.net",
+  "cdn.sanity.io",
+  "i.ytimg.com",
+]);
+
+function isAllowedImageUrl(url: string): boolean {
+  try {
+    const u = new URL(url);
+    return ALLOWED_IMAGE_HOSTS.has(u.hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Returns the best-effort image URL for a post identified by its slug —
+ * either the WordPress featured_media image or the first `<img>` in the
+ * post body. Falls back to `null` when no image can be found. Intended
+ * as a fallback for Sanity posts where `featuredImage` wasn't populated
+ * by the migration.
+ */
+export async function getFallbackImageForSlug(
+  slug: string
+): Promise<{ url: string; alt: string } | null> {
+  const [posts, media] = await Promise.all([
+    loadSlugToPostMap(),
+    loadMediaByIdMap(),
+  ]);
+
+  const post = posts.get(slug) ?? posts.get(decodeURIComponent(slug));
+  if (!post) return null;
+
+  if (post.featured_media) {
+    const m = media.get(post.featured_media);
+    if (m?.source_url && isAllowedImageUrl(m.source_url)) {
+      return { url: m.source_url, alt: m.alt_text || "" };
+    }
+  }
+
+  // Inline <img> fallback — take the first one whose src is an absolute
+  // URL we're allowed to proxy through next/image.
+  const html = post.content?.rendered ?? "";
+  const match = html.match(/<img[^>]+src=["']([^"'>\s]+)["'][^>]*>/i);
+  if (match) {
+    const url = match[1];
+    if (isAllowedImageUrl(url)) {
+      const altMatch = html.match(/<img[^>]+alt=["']([^"']*)["']/i);
+      return { url, alt: altMatch?.[1] ?? "" };
+    }
+  }
+
+  return null;
+}
