@@ -9,6 +9,8 @@
     "lint": "eslint",
     "migrate:sanity": "tsx scripts/migrate-to-sanity.ts",
     "migrate:sanity:dry": "tsx scripts/migrate-to-sanity.ts --dry-run",
+    "apply:axes": "tsx scripts/apply-axes-to-sanity.ts",
+    "apply:axes:dry": "tsx scripts/apply-axes-to-sanity.ts --dry-run",
     "fetch:wp": "tsx scripts/fetch-from-wordpress.ts"
   },
   "dependencies": {

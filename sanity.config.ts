@@ -32,8 +32,28 @@ export default defineConfig({
                     { field: "publishedAt", direction: "desc" },
                   ])
               ),
+            S.divider(),
             S.listItem()
-              .title("التصنيفات")
+              .title("المحاور الفكرية")
+              .child(
+                S.documentTypeList("intellectualAxis")
+                  .title("المحاور الفكرية (٧)")
+                  .defaultOrdering([
+                    { field: "axisNumber", direction: "asc" },
+                  ])
+              ),
+            S.listItem()
+              .title("السلاسل")
+              .child(
+                S.documentTypeList("series")
+                  .title("السلاسل")
+                  .defaultOrdering([
+                    { field: "displayOrder", direction: "asc" },
+                  ])
+              ),
+            S.divider(),
+            S.listItem()
+              .title("التصنيفات (قديمة — لـ SEO)")
               .child(S.documentTypeList("category").title("التصنيفات")),
             S.listItem()
               .title("الوسوم")

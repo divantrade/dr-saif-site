@@ -2,13 +2,27 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import type { CategoryNode } from "@/lib/types";
-import { categoryHref } from "@/lib/types";
+import type {
+  AxisSummary,
+  SeriesSummary,
+  YearSummary,
+  PublisherSummary,
+} from "@/lib/types";
+import {
+  axisHref,
+  seriesHref,
+  yearHref,
+  categoryHref,
+} from "@/lib/types";
+import { axisColors } from "./AxisBadge";
 import SearchForm from "./SearchForm";
 import SocialLinks from "./SocialLinks";
 
 interface MobileNavProps {
-  articlesTree: CategoryNode[];
+  axes: AxisSummary[];
+  series: SeriesSummary[];
+  years: YearSummary[];
+  publishers: PublisherSummary[];
 }
 
 interface NavItem {
@@ -17,7 +31,6 @@ interface NavItem {
 }
 
 const TOP_LEVEL: NavItem[] = [
-  { href: "/", label: "الرئيسية" },
   { href: "/podcast", label: "بودكاست" },
   { href: "/videos", label: "فيديوهاتنا" },
   { href: "/waqf-alqalam", label: "وقف القلم" },
@@ -26,18 +39,24 @@ const TOP_LEVEL: NavItem[] = [
   { href: "/contact", label: "تواصل معنا" },
 ];
 
-export default function MobileNav({ articlesTree }: MobileNavProps) {
-  const [open, setOpen] = useState(false);
-  const [expanded, setExpanded] = useState<Set<number>>(new Set());
+type Section = "project" | "series" | "archive";
 
-  const toggle = (id: number) => {
+export default function MobileNav({
+  axes,
+  series,
+  years,
+  publishers,
+}: MobileNavProps) {
+  const [open, setOpen] = useState(false);
+  const [expanded, setExpanded] = useState<Set<Section>>(new Set());
+
+  const toggle = (s: Section) =>
     setExpanded((prev) => {
       const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
+      if (next.has(s)) next.delete(s);
+      else next.add(s);
       return next;
     });
-  };
 
   const close = () => setOpen(false);
 
@@ -65,6 +84,7 @@ export default function MobileNav({ articlesTree }: MobileNavProps) {
           <div className="px-2 pb-3">
             <SearchForm placeholder="ابحث…" />
           </div>
+
           <Link
             href="/"
             onClick={close}
@@ -73,66 +93,126 @@ export default function MobileNav({ articlesTree }: MobileNavProps) {
             الرئيسية
           </Link>
 
-          {/* Articles accordion */}
-          <div className="mt-1">
-            <div className="px-4 py-2 text-xs font-semibold text-gray-400 uppercase">
-              المقالات
-            </div>
-            <ul>
-              {articlesTree.map((node) => {
-                const hasChildren = node.children.length > 0;
-                const isOpen = expanded.has(node.category.id);
+          {/* المشروع الفكري */}
+          <SectionAccordion
+            label="المشروع الفكري"
+            href="/axis"
+            count={axes.length}
+            isOpen={expanded.has("project")}
+            onToggle={() => toggle("project")}
+          >
+            <ul className="space-y-0.5">
+              {axes.map((a) => {
+                const c = axisColors(a.color);
                 return (
-                  <li key={node.category.id}>
-                    <div className="flex items-center">
-                      <Link
-                        href={categoryHref(node.category.slug)}
-                        onClick={close}
-                        className="flex-1 px-4 py-2.5 text-sm text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-                      >
-                        {node.category.name}
-                      </Link>
-                      {hasChildren && (
-                        <button
-                          type="button"
-                          onClick={() => toggle(node.category.id)}
-                          aria-label={isOpen ? "طي" : "توسيع"}
-                          className="p-2 mx-1 text-gray-400 hover:text-emerald-700"
+                  <li key={a._id}>
+                    <Link
+                      href={axisHref(a.slug)}
+                      onClick={close}
+                      className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="flex items-center gap-2 min-w-0">
+                        <span
+                          className={`shrink-0 w-6 h-6 rounded ${c.accent} text-[10px] font-bold flex items-center justify-center tabular-nums`}
                         >
-                          <svg
-                            className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`}
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                          </svg>
-                        </button>
-                      )}
-                    </div>
-                    {hasChildren && isOpen && (
-                      <ul className="pr-4 border-r-2 border-emerald-100 mr-4 my-1">
-                        {node.children.map((child) => (
-                          <li key={child.category.id}>
-                            <Link
-                              href={categoryHref(child.category.slug)}
-                              onClick={close}
-                              className="block px-4 py-2 text-sm text-gray-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-                            >
-                              {child.category.name}
-                            </Link>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
+                          {a.axisNumber}
+                        </span>
+                        <span className="truncate text-sm text-gray-700">
+                          {a.shortName || a.name}
+                        </span>
+                      </span>
+                      <span className="text-xs text-gray-400 tabular-nums shrink-0">
+                        {a.postCount}
+                      </span>
+                    </Link>
                   </li>
                 );
               })}
             </ul>
-          </div>
+          </SectionAccordion>
 
-          <div className="mt-1 border-t border-gray-100 pt-2">
-            {TOP_LEVEL.filter((item) => item.href !== "/").map((item) => (
+          {/* السلاسل */}
+          <SectionAccordion
+            label="السلاسل"
+            href="/series"
+            count={series.length}
+            isOpen={expanded.has("series")}
+            onToggle={() => toggle("series")}
+          >
+            <ul className="space-y-0.5">
+              {series.map((s) => (
+                <li key={s._id}>
+                  <Link
+                    href={seriesHref(s.slug)}
+                    onClick={close}
+                    className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    <span className="text-sm text-gray-700 truncate">
+                      {s.name}
+                    </span>
+                    <span className="text-xs text-gray-400 tabular-nums shrink-0">
+                      {s.postCount}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </SectionAccordion>
+
+          {/* أرشيف */}
+          <SectionAccordion
+            label="أرشيف"
+            href="/archive"
+            isOpen={expanded.has("archive")}
+            onToggle={() => toggle("archive")}
+          >
+            <div className="px-2 pb-2">
+              <p className="px-2 pt-1 pb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                حسب السنة
+              </p>
+              <ul className="grid grid-cols-4 gap-1.5 mb-3">
+                {years.map((y) => (
+                  <li key={y.year}>
+                    <Link
+                      href={yearHref(y.year)}
+                      onClick={close}
+                      className="block text-center py-1.5 rounded border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
+                    >
+                      <span className="text-xs font-bold text-gray-700 tabular-nums">
+                        {y.year}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+
+              <p className="px-2 pt-1 pb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                حسب منصّة النشر
+              </p>
+              <ul className="space-y-0.5">
+                {publishers.map((p) => (
+                  <li key={p.slug}>
+                    <Link
+                      href={categoryHref(p.slug)}
+                      onClick={close}
+                      className="flex items-baseline justify-between gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <span className="text-sm text-gray-700 truncate">
+                        {p.name}
+                      </span>
+                      <span className="text-xs text-gray-400 tabular-nums shrink-0">
+                        {p.count}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </SectionAccordion>
+
+          {/* Top-level links */}
+          <div className="mt-2 border-t border-gray-100 pt-2">
+            {TOP_LEVEL.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -150,5 +230,68 @@ export default function MobileNav({ articlesTree }: MobileNavProps) {
         </nav>
       )}
     </>
+  );
+}
+
+// ─── Accordion section ──────────────────────────────────────────────────────
+
+function SectionAccordion({
+  label,
+  href,
+  count,
+  isOpen,
+  onToggle,
+  children,
+}: {
+  label: string;
+  href: string;
+  count?: number;
+  isOpen: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="mt-1">
+      <div className="flex items-center">
+        <Link
+          href={href}
+          className="flex-1 px-4 py-2.5 text-sm font-medium text-gray-800 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors flex items-center gap-2"
+        >
+          <span>{label}</span>
+          {count != null && (
+            <span className="text-[10px] tabular-nums px-1.5 py-0.5 rounded bg-gray-100 text-gray-500">
+              {count}
+            </span>
+          )}
+        </Link>
+        <button
+          type="button"
+          onClick={onToggle}
+          aria-label={isOpen ? "طي" : "توسيع"}
+          className="p-2 mx-1 text-gray-400 hover:text-emerald-700"
+        >
+          <svg
+            className={`w-4 h-4 transition-transform ${
+              isOpen ? "rotate-180" : ""
+            }`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 9l-7 7-7-7"
+            />
+          </svg>
+        </button>
+      </div>
+      {isOpen && (
+        <div className="pr-4 border-r-2 border-emerald-100 mr-4 my-1">
+          {children}
+        </div>
+      )}
+    </div>
   );
 }

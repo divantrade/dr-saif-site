@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { getArticlesTree } from "@/lib/data";
+import { getNavData } from "@/lib/sanity-data";
 import MegaMenu from "./MegaMenu";
 import MobileNav from "./MobileNav";
 import SocialLinks from "./SocialLinks";
@@ -11,23 +11,30 @@ function SearchIconLink() {
       aria-label="البحث"
       className="p-2 text-gray-500 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
     >
-      <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      <svg
+        className="w-5 h-5"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth={2}
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        />
       </svg>
     </Link>
   );
 }
 
 const TOP_LEVEL_LINKS = [
-  { href: "/podcast", label: "بودكاست" },
-  { href: "/videos", label: "فيديوهاتنا" },
-  { href: "/waqf-alqalam", label: "وقف القلم" },
-  { href: "/civilizational-school", label: "المدرسة الحضارية" },
-  { href: "/about", label: "السيرة الذاتية" },
+  { href: "/books", label: "الكتب والدراسات" },
+  { href: "/about", label: "عن الدكتور" },
 ];
 
 export default async function Header() {
-  const articlesTree = await getArticlesTree();
+  const { axes, series, years, publishers } = await getNavData();
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-gray-100 shadow-sm">
@@ -42,7 +49,7 @@ export default async function Header() {
               <h1 className="text-base font-bold text-gray-900 leading-tight">
                 أ.د. سيف الدين عبد الفتاح
               </h1>
-              <p className="text-xs text-gray-400">كتابات ومقالات</p>
+              <p className="text-xs text-gray-400">كتابات و مقالات</p>
             </div>
           </Link>
 
@@ -54,7 +61,12 @@ export default async function Header() {
             >
               الرئيسية
             </Link>
-            <MegaMenu articlesTree={articlesTree} />
+            <MegaMenu
+              axes={axes}
+              series={series}
+              years={years}
+              publishers={publishers}
+            />
             {TOP_LEVEL_LINKS.map((link) => (
               <Link
                 key={link.href}
@@ -74,7 +86,12 @@ export default async function Header() {
           </div>
 
           {/* Mobile menu */}
-          <MobileNav articlesTree={articlesTree} />
+          <MobileNav
+            axes={axes}
+            series={series}
+            years={years}
+            publishers={publishers}
+          />
         </div>
       </div>
     </header>

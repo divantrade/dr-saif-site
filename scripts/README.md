@@ -1,5 +1,31 @@
 # Scripts
 
+## `apply-axes-to-sanity.ts` — apply the new thematic taxonomy
+
+Reads `docs/cork/reclassification-map.json` and writes:
+
+- 7 `intellectualAxis` documents (deterministic ids: `axis-1` … `axis-7`)
+- 6 `series` documents (ids: `series-<slug>`)
+- patches every post (looked up by `legacyId`) with `axis._ref`,
+  `series._ref` (when applicable), and `seriesNumber`.
+
+Idempotent — uses `createOrReplace` for taxonomy nodes and batched
+`patch` transactions for posts. Re-running is safe.
+
+```bash
+npm run apply:axes:dry          # plan only
+npm run apply:axes              # write
+npm run apply:axes -- --only=taxonomy   # axes & series only
+npm run apply:axes -- --only=posts      # patch posts only
+```
+
+Prereqs:
+- Posts must already be in Sanity with `legacyId` set
+  (run `npm run migrate:sanity` first).
+- `SANITY_WRITE_TOKEN` in `.env.local` with Editor permission.
+
+---
+
 ## `migrate-to-sanity.ts` — one-shot WordPress → Sanity migration
 
 ### Before running
