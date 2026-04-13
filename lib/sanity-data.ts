@@ -338,6 +338,43 @@ export async function getPublishedPostCount(): Promise<number> {
 }
 
 /**
+ * Counts of posts filed under the "books" and "studies" legacy
+ * categories, looked up by their original WordPress ids so the result
+ * tracks the archive exactly as migrated. Studies additionally include
+ * pieces in "في الكتب والدراسات المعاصرة" (legacyId 39) since editors
+ * treated that as a sibling bucket in the old taxonomy.
+ *
+ * These are displayed in the StatsStrip alongside the total-posts and
+ * axes/series counts.
+ */
+export async function getArchiveCredits(): Promise<{
+  books: number;
+  studies: number;
+}> {
+  const BOOKS_LEGACY = 41;
+  const STUDIES_LEGACY = 43;
+  const BOOKS_AND_STUDIES_LEGACY = 39; // "في الكتب والدراسات المعاصرة"
+
+  return sanityClient.fetch<{ books: number; studies: number }>(
+    `{
+       "books": count(*[
+         _type == "post" && defined(publishedAt) &&
+         count(categories[@->legacyId == $booksId]) > 0
+       ]),
+       "studies": count(*[
+         _type == "post" && defined(publishedAt) &&
+         count(categories[@->legacyId in $studiesIds]) > 0
+       ])
+     }`,
+    {
+      booksId: BOOKS_LEGACY,
+      studiesIds: [STUDIES_LEGACY, BOOKS_AND_STUDIES_LEGACY],
+    },
+    { next: { revalidate: 1800, tags: ["posts", "categories"] } }
+  );
+}
+
+/**
  * For every axis, return the most recent published post in that axis.
  * Drives the homepage "مختارات من المحاور" feed — one recent piece per
  * axis, so the section showcases the breadth of the project rather

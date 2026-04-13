@@ -13,18 +13,27 @@ import {
   getPublishers,
   getLatestPostPerAxis,
   getPublishedPostCount,
+  getArchiveCredits,
 } from "@/lib/sanity-data";
 
 export default async function HomePage() {
-  const [axes, series, years, publishers, feedByAxis, totalPosts] =
-    await Promise.all([
-      getAxes(),
-      getSeriesList(),
-      getPostYears(),
-      getPublishers(),
-      getLatestPostPerAxis(),
-      getPublishedPostCount(),
-    ]);
+  const [
+    axes,
+    series,
+    years,
+    publishers,
+    feedByAxis,
+    totalPosts,
+    credits,
+  ] = await Promise.all([
+    getAxes(),
+    getSeriesList(),
+    getPostYears(),
+    getPublishers(),
+    getLatestPostPerAxis(),
+    getPublishedPostCount(),
+    getArchiveCredits(),
+  ]);
 
   // One recent post per axis — filter out axes without any posts yet.
   const axisPosts = feedByAxis
@@ -32,9 +41,12 @@ export default async function HomePage() {
     .map((x) => x.post!) // non-null asserted after filter
     .slice(0, 7);
 
-  // Three editorial credits, Latin digits for an instantly-legible scale.
+  // Five editorial credits — mirrors the legacy site's stat row but
+  // sourced live from Sanity. Latin digits for instantly-legible scale.
   const stats = [
     { value: String(totalPosts), label: "مقالاً منشوراً" },
+    { value: String(credits.studies), label: "دراسة" },
+    { value: String(credits.books), label: "كتاباً" },
     { value: "7", label: "محاور فكرية" },
     { value: String(series.length), label: "سلاسل مقاليّة" },
   ];

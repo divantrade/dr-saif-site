@@ -32,18 +32,34 @@ const QUOTES: CarouselQuote[] = [
 ];
 
 const ROTATE_MS = 6000;
+// How far the incoming / outgoing slide travels horizontally. 3rem is
+// visible enough to read as "motion" but not so wide that wrap-around
+// (last → first) looks jarring.
+const SLIDE_OFFSET = "3rem";
 
 /**
- * Full-width horizontal strip that sits beneath the Hero's portrait +
- * identity block. Crossfades between four short quotes, auto-advancing
- * every six seconds. Pauses on hover/focus. Keyboard arrows + dots for
- * manual navigation. Honours prefers-reduced-motion.
+ * Full-width horizontal strip that sits beneath the Hero's identity
+ * band. Each new quote crossfades while sliding in from the right
+ * (the leading edge in RTL); the outgoing quote fades away while
+ * sliding further to the left.
+ *
+ * On first mount, the entire strip fades + drops into place from ~20px
+ * above its final position — a one-time "arrival" movement so it
+ * announces itself when the page first loads.
  */
 export default function HeroQuoteCarousel() {
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
+  const [entered, setEntered] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  // One-time entry animation after mount.
+  useEffect(() => {
+    const raf = requestAnimationFrame(() => setEntered(true));
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  // Auto-advance.
   useEffect(() => {
     if (paused) return;
     if (
@@ -58,12 +74,12 @@ export default function HeroQuoteCarousel() {
     return () => clearInterval(id);
   }, [paused]);
 
+  // Keyboard navigation — RTL-aware (ArrowLeft advances).
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowLeft") {
-        // RTL: ArrowLeft advances.
         setActive((a) => (a + 1) % QUOTES.length);
       } else if (e.key === "ArrowRight") {
         setActive((a) => (a - 1 + QUOTES.length) % QUOTES.length);
@@ -85,6 +101,12 @@ export default function HeroQuoteCarousel() {
       onFocus={() => setPaused(true)}
       onBlur={() => setPaused(false)}
       className="relative w-full bg-gradient-to-l from-amber-950 via-amber-900 to-stone-900 overflow-hidden focus:outline-none focus:ring-2 focus:ring-inset focus:ring-amber-400/50"
+      style={{
+        opacity: entered ? 1 : 0,
+        transform: entered ? "translateY(0)" : "translateY(-20px)",
+        transition:
+          "opacity 900ms ease-out, transform 900ms cubic-bezier(0.22, 1, 0.36, 1)",
+      }}
     >
       {/* Geometric watermark */}
       <div
@@ -96,13 +118,13 @@ export default function HeroQuoteCarousel() {
         aria-hidden
       />
 
-      {/* Hairline top + bottom gold rules */}
+      {/* Top + bottom hairline gold rules */}
       <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-400/40 to-transparent pointer-events-none" />
       <div className="absolute bottom-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-amber-400/20 to-transparent pointer-events-none" />
 
       <div className="relative max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-8 md:py-10">
         <div className="grid gap-5 md:gap-8 md:grid-cols-[auto_1fr_auto] items-center">
-          {/* Editorial kicker — far side (right in RTL) */}
+          {/* Editorial kicker */}
           <div className="flex items-center md:flex-col md:items-end gap-3 md:gap-2 text-amber-300/80 shrink-0 md:min-w-[6rem]">
             <span className="font-display text-amber-400/50 text-5xl leading-none select-none pointer-events-none">
               ﴿
@@ -112,32 +134,45 @@ export default function HeroQuoteCarousel() {
             </span>
           </div>
 
-          {/* Slide well — crossfaded quote + source */}
-          <div className="relative min-h-[5.5rem] md:min-h-[7rem] flex items-center">
-            {QUOTES.map((q, i) => (
-              <figure
-                key={i}
-                className={`absolute inset-0 flex flex-col justify-center transition-opacity duration-700 ease-in-out ${
-                  i === active
-                    ? "opacity-100"
-                    : "opacity-0 pointer-events-none"
-                }`}
-                aria-hidden={i !== active}
-              >
-                <blockquote className="font-display font-bold text-lg sm:text-xl md:text-2xl lg:text-[1.65rem] xl:text-3xl text-amber-50 leading-[1.55] mb-3">
-                  {q.text}
-                </blockquote>
-                <figcaption className="flex items-center gap-3 text-amber-300/70">
-                  <span className="h-px w-8 bg-amber-400/40" />
-                  <cite className="not-italic text-[11px] tracking-[0.25em] uppercase">
-                    {q.source}
-                  </cite>
-                </figcaption>
-              </figure>
-            ))}
+          {/* Slide well — each quote crossfades while sliding horizontally.
+              Incoming slide (diff > 0) sits SLIDE_OFFSET to the right;
+              outgoing slide (diff < 0) slides to the left. The active
+              slide rests at translateX(0). The overflow-hidden on the
+              parent strip keeps the off-screen portions clipped. */}
+          <div className="relative min-h-[5.5rem] md:min-h-[7rem]">
+            {QUOTES.map((q, i) => {
+              const diff = i - active;
+              const isActive = diff === 0;
+              return (
+                <figure
+                  key={i}
+                  aria-hidden={!isActive}
+                  className="absolute inset-0 flex flex-col justify-center"
+                  style={{
+                    opacity: isActive ? 1 : 0,
+                    transform: isActive
+                      ? "translateX(0)"
+                      : `translateX(${diff > 0 ? SLIDE_OFFSET : `-${SLIDE_OFFSET}`})`,
+                    transition:
+                      "opacity 500ms ease-in-out, transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+                    pointerEvents: isActive ? "auto" : "none",
+                  }}
+                >
+                  <blockquote className="font-display font-bold text-lg sm:text-xl md:text-2xl lg:text-[1.65rem] xl:text-3xl text-amber-50 leading-[1.55] mb-3">
+                    {q.text}
+                  </blockquote>
+                  <figcaption className="flex items-center gap-3 text-amber-300/70">
+                    <span className="h-px w-8 bg-amber-400/40" />
+                    <cite className="not-italic text-[11px] tracking-[0.25em] uppercase">
+                      {q.source}
+                    </cite>
+                  </figcaption>
+                </figure>
+              );
+            })}
           </div>
 
-          {/* Dots + counter — far side (left in RTL) */}
+          {/* Dots + counter */}
           <div className="flex md:flex-col items-center md:items-start gap-4 md:gap-3 shrink-0">
             <div className="flex items-center gap-2" role="tablist">
               {QUOTES.map((_, i) => (
