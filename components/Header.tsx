@@ -52,20 +52,33 @@ export default async function Header() {
             </div>
           </Link>
 
-          {/* Desktop nav */}
+          {/* Desktop nav — order per editorial spec:
+              الرئيسية · الكتب والدراسات · المقالات · عن الدكتور · الأرشيف. */}
           <nav
             className="hidden md:flex items-stretch self-stretch"
             aria-label="القائمة الرئيسية"
           >
             <HeaderLink href="/" label="الرئيسية" />
+            <HeaderLink
+              href="/books"
+              label="الكتب والدراسات"
+              matchDescendants
+            />
             <MegaMenu
               axes={axes}
               series={series}
               years={years}
               publishers={publishers}
+              tabs={["articles"]}
             />
-            <HeaderLink href="/books" label="الكتب" matchDescendants />
             <HeaderLink href="/about" label="عن الدكتور" matchDescendants />
+            <MegaMenu
+              axes={axes}
+              series={series}
+              years={years}
+              publishers={publishers}
+              tabs={["archive"]}
+            />
           </nav>
 
           {/* Search (desktop) */}

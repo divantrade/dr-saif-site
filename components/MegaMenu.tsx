@@ -22,9 +22,15 @@ interface MegaMenuProps {
   series: SeriesSummary[];
   years: YearSummary[];
   publishers: PublisherSummary[];
+  /**
+   * When provided, render only the listed tab triggers (in the order
+   * given). Lets the Header place different tabs at different spots in
+   * the nav (e.g. "المقالات" before "عن الدكتور" but "الأرشيف" last).
+   */
+  tabs?: Tab[];
 }
 
-type Tab = "project" | "series" | "archive";
+type Tab = "articles" | "series" | "archive";
 
 interface TabDef {
   id: Tab;
@@ -34,9 +40,9 @@ interface TabDef {
 }
 
 const TABS: TabDef[] = [
-  { id: "project", label: "المشروع الفكري", href: "/axis", matchPrefix: "/axis" },
+  { id: "articles", label: "المقالات", href: "/axis", matchPrefix: "/axis" },
   { id: "series", label: "السلاسل", href: "/series", matchPrefix: "/series" },
-  { id: "archive", label: "أرشيف", href: "/archive", matchPrefix: "/archive" },
+  { id: "archive", label: "الأرشيف", href: "/archive", matchPrefix: "/archive" },
 ];
 
 /**
@@ -53,10 +59,17 @@ export default function MegaMenu({
   series,
   years,
   publishers,
+  tabs,
 }: MegaMenuProps) {
   const [openTab, setOpenTab] = useState<Tab | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pathname = usePathname() || "/";
+
+  const visibleTabs = tabs
+    ? (tabs
+        .map((id) => TABS.find((t) => t.id === id))
+        .filter(Boolean) as TabDef[])
+    : TABS;
 
   const cancelClose = () => {
     if (closeTimer.current) {
@@ -87,7 +100,7 @@ export default function MegaMenu({
       onMouseLeave={scheduleClose}
       onMouseEnter={cancelClose}
     >
-      {TABS.map((tab) => {
+      {visibleTabs.map((tab) => {
         const isOpen = openTab === tab.id;
         const isActive =
           pathname === tab.matchPrefix ||
@@ -142,8 +155,8 @@ export default function MegaMenu({
                 onMouseLeave={scheduleClose}
               >
                 <div className="bg-white border border-gray-100 rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.12)] animate-[panelIn_180ms_ease-out] origin-top overflow-hidden">
-                  {tab.id === "project" && (
-                    <ProjectPanel axes={axes} onNavigate={() => setOpenTab(null)} />
+                  {tab.id === "articles" && (
+                    <ArticlesPanel axes={axes} onNavigate={() => setOpenTab(null)} />
                   )}
                   {tab.id === "series" && (
                     <SeriesPanel
@@ -222,7 +235,7 @@ function PanelFooter({
   );
 }
 
-function ProjectPanel({
+function ArticlesPanel({
   axes,
   onNavigate,
 }: {
@@ -231,7 +244,7 @@ function ProjectPanel({
 }) {
   return (
     <div className="w-[380px]">
-      <PanelHeader label={`المشروع الفكري — ٧ محاور`} />
+      <PanelHeader label={`المقالات — ٧ محاور`} />
       <ul className="pb-2">
         {axes.map((a) => {
           // Prefer explicit colour, fall back to axis-number default so any
@@ -260,8 +273,8 @@ function ProjectPanel({
         })}
       </ul>
       <PanelFooter
-        href="/axis"
-        label="عرض كل المحاور"
+        href="/blog"
+        label="كل المقالات"
         onNavigate={onNavigate}
       />
     </div>

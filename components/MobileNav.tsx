@@ -30,16 +30,18 @@ interface NavItem {
   label: string;
 }
 
-const TOP_LEVEL: NavItem[] = [
+// Secondary links — sit below the four primary nav items (books,
+// articles, about) but above the archive accordion which is pinned
+// to the bottom of the menu.
+const SECONDARY_LINKS: NavItem[] = [
   { href: "/podcast", label: "بودكاست" },
   { href: "/videos", label: "فيديوهاتنا" },
   { href: "/waqf-alqalam", label: "وقف القلم" },
   { href: "/civilizational-school", label: "المدرسة الحضارية" },
-  { href: "/about", label: "السيرة الذاتية" },
   { href: "/contact", label: "تواصل معنا" },
 ];
 
-type Section = "project" | "series" | "archive";
+type Section = "articles" | "series" | "archive";
 
 export default function MobileNav({
   axes,
@@ -93,13 +95,22 @@ export default function MobileNav({
             الرئيسية
           </Link>
 
-          {/* المشروع الفكري */}
+          {/* الكتب والدراسات */}
+          <Link
+            href="/books"
+            onClick={close}
+            className="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+          >
+            الكتب والدراسات
+          </Link>
+
+          {/* المقالات */}
           <SectionAccordion
-            label="المشروع الفكري"
+            label="المقالات"
             href="/axis"
             count={axes.length}
-            isOpen={expanded.has("project")}
-            onToggle={() => toggle("project")}
+            isOpen={expanded.has("articles")}
+            onToggle={() => toggle("articles")}
           >
             <ul className="space-y-0.5">
               {axes.map((a) => {
@@ -130,7 +141,16 @@ export default function MobileNav({
             </ul>
           </SectionAccordion>
 
-          {/* السلاسل */}
+          {/* عن الدكتور */}
+          <Link
+            href="/about"
+            onClick={close}
+            className="block px-4 py-2.5 text-sm font-medium text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
+          >
+            عن الدكتور
+          </Link>
+
+          {/* السلاسل — كشف إضافي داخل القائمة */}
           <SectionAccordion
             label="السلاسل"
             href="/series"
@@ -158,60 +178,9 @@ export default function MobileNav({
             </ul>
           </SectionAccordion>
 
-          {/* أرشيف */}
-          <SectionAccordion
-            label="أرشيف"
-            href="/archive"
-            isOpen={expanded.has("archive")}
-            onToggle={() => toggle("archive")}
-          >
-            <div className="px-2 pb-2">
-              <p className="px-2 pt-1 pb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                حسب السنة
-              </p>
-              <ul className="grid grid-cols-4 gap-1.5 mb-3">
-                {years.map((y) => (
-                  <li key={y.year}>
-                    <Link
-                      href={yearHref(y.year)}
-                      onClick={close}
-                      className="block text-center py-1.5 rounded border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
-                    >
-                      <span className="text-xs font-bold text-gray-700 tabular-nums">
-                        {y.year}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-
-              <p className="px-2 pt-1 pb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
-                حسب منصّة النشر
-              </p>
-              <ul className="space-y-0.5">
-                {publishers.map((p) => (
-                  <li key={p.slug}>
-                    <Link
-                      href={categoryHref(p.slug)}
-                      onClick={close}
-                      className="flex items-baseline justify-between gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
-                    >
-                      <span className="text-sm text-gray-700 truncate">
-                        {p.name}
-                      </span>
-                      <span className="text-xs text-gray-400 tabular-nums shrink-0">
-                        {p.count}
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </SectionAccordion>
-
-          {/* Top-level links */}
+          {/* Secondary links */}
           <div className="mt-2 border-t border-gray-100 pt-2">
-            {TOP_LEVEL.map((item) => (
+            {SECONDARY_LINKS.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -221,6 +190,59 @@ export default function MobileNav({
                 {item.label}
               </Link>
             ))}
+          </div>
+
+          {/* الأرشيف — آخر عنصر في القائمة */}
+          <div className="mt-2 border-t border-gray-100 pt-2">
+            <SectionAccordion
+              label="الأرشيف"
+              href="/archive"
+              isOpen={expanded.has("archive")}
+              onToggle={() => toggle("archive")}
+            >
+              <div className="px-2 pb-2">
+                <p className="px-2 pt-1 pb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  حسب السنة
+                </p>
+                <ul className="grid grid-cols-4 gap-1.5 mb-3">
+                  {years.map((y) => (
+                    <li key={y.year}>
+                      <Link
+                        href={yearHref(y.year)}
+                        onClick={close}
+                        className="block text-center py-1.5 rounded border border-gray-100 hover:border-emerald-300 hover:bg-emerald-50 transition-all"
+                      >
+                        <span className="text-xs font-bold text-gray-700 tabular-nums">
+                          {y.year}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+
+                <p className="px-2 pt-1 pb-2 text-[10px] font-bold uppercase tracking-widest text-gray-400">
+                  حسب منصّة النشر
+                </p>
+                <ul className="space-y-0.5">
+                  {publishers.map((p) => (
+                    <li key={p.slug}>
+                      <Link
+                        href={categoryHref(p.slug)}
+                        onClick={close}
+                        className="flex items-baseline justify-between gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
+                      >
+                        <span className="text-sm text-gray-700 truncate">
+                          {p.name}
+                        </span>
+                        <span className="text-xs text-gray-400 tabular-nums shrink-0">
+                          {p.count}
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </SectionAccordion>
           </div>
 
           <div className="mt-3 px-4 flex justify-center">
