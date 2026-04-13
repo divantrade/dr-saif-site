@@ -172,19 +172,18 @@ export async function getPostsBySeriesSlug(
 // ─── Archive: years ─────────────────────────────────────────────────────────
 
 export async function getPostYears(): Promise<YearSummary[]> {
-  // Group by year via GROQ projection. Sanity has no GROUP BY, so we project
-  // year strings then aggregate in JS. The post set is small (~1.2k) so this
-  // is cheap.
-  const rows = await sanityClient.fetch<{ year: number }[]>(
-    `*[_type == "post" && defined(publishedAt)] {
-       "year": dateTime(publishedAt) | string::split("-")[0]
-     }`,
+  // Project just the ISO date string and bucket by year in JS. Sanity's
+  // `string::split` isn't available on the API version we pin to, and the
+  // post set is small (~1.2k) so the JS aggregation is cheap.
+  const rows = await sanityClient.fetch<{ publishedAt: string | null }[]>(
+    `*[_type == "post" && defined(publishedAt)] { publishedAt }`,
     {},
     { next: { revalidate: 1800, tags: ["posts", "archive"] } }
   );
   const counts = new Map<number, number>();
   for (const r of rows) {
-    const y = Number(r.year);
+    if (!r.publishedAt) continue;
+    const y = Number(r.publishedAt.slice(0, 4));
     if (!Number.isFinite(y)) continue;
     counts.set(y, (counts.get(y) ?? 0) + 1);
   }
