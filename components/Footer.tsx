@@ -7,7 +7,7 @@ import SocialLinks from "./SocialLinks";
 const QUICK_LINKS: { href: string; label: string }[] = [
   { href: "/", label: "الرئيسية" },
   { href: "/blog", label: "جميع المقالات" },
-  { href: "/books", label: "الكتب و الدراسات" },
+  { href: "/books", label: "الكتب والدراسات" },
   { href: "/podcast", label: "بودكاست" },
   { href: "/videos", label: "فيديوهات" },
   { href: "/waqf-alqalam", label: "وقف القلم" },
@@ -61,9 +61,9 @@ export default async function Footer() {
             />
           </div>
 
-          {/* Col 2 — Intellectual project axes */}
+          {/* Col 2 — Articles, grouped by axis */}
           <div>
-            <ColumnTitle>المشروع الفكري</ColumnTitle>
+            <ColumnTitle>المقالات</ColumnTitle>
             <ul className="space-y-[0.35rem]">
               {axes.map((a) => {
                 const c = a.color
