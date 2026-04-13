@@ -14,7 +14,7 @@ import {
   yearHref,
   categoryHref,
 } from "@/lib/types";
-import { axisColors } from "./AxisBadge";
+import { axisColors, axisColorByNumber } from "./AxisBadge";
 import SearchForm from "./SearchForm";
 import SocialLinks from "./SocialLinks";
 
@@ -103,7 +103,7 @@ export default function MobileNav({
           >
             <ul className="space-y-0.5">
               {axes.map((a) => {
-                const c = axisColors(a.color);
+                const c = a.color ? axisColors(a.color) : axisColorByNumber(a.axisNumber);
                 return (
                   <li key={a._id}>
                     <Link
@@ -111,12 +111,11 @@ export default function MobileNav({
                       onClick={close}
                       className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors"
                     >
-                      <span className="flex items-center gap-2 min-w-0">
+                      <span className="flex items-center gap-2.5 min-w-0">
                         <span
-                          className={`shrink-0 w-6 h-6 rounded ${c.accent} text-[10px] font-bold flex items-center justify-center tabular-nums`}
-                        >
-                          {a.axisNumber}
-                        </span>
+                          className={`shrink-0 w-2 h-2 rounded-full ${c.dot}`}
+                          aria-hidden
+                        />
                         <span className="truncate text-sm text-gray-700">
                           {a.shortName || a.name}
                         </span>

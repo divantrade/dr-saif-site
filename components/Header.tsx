@@ -2,7 +2,7 @@ import Link from "next/link";
 import { getNavData } from "@/lib/sanity-data";
 import MegaMenu from "./MegaMenu";
 import MobileNav from "./MobileNav";
-import SocialLinks from "./SocialLinks";
+import HeaderLink from "./HeaderLink";
 
 function SearchIconLink() {
   return (
@@ -28,61 +28,49 @@ function SearchIconLink() {
   );
 }
 
-const TOP_LEVEL_LINKS = [
-  { href: "/books", label: "الكتب والدراسات" },
-  { href: "/about", label: "عن الدكتور" },
-];
-
 export default async function Header() {
   const { axes, series, years, publishers } = await getNavData();
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-lg border-b border-gray-100 shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16">
-          {/* Logo */}
+    <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-lg border-b border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-[72px]">
+          {/* Logo + name */}
           <Link href="/" className="flex items-center gap-3 group shrink-0">
             <div className="w-11 h-11 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-shadow">
-              <span className="text-white font-bold text-xl">س</span>
+              <span className="text-white font-bold text-xl font-display leading-none">
+                س
+              </span>
             </div>
-            <div className="hidden sm:block">
-              <h1 className="text-base font-bold text-gray-900 leading-tight">
+            <div className="hidden sm:block leading-tight">
+              <h1 className="text-[1.05rem] font-bold text-gray-900">
                 أ.د. سيف الدين عبد الفتاح
               </h1>
-              <p className="text-xs text-gray-400">كتابات و مقالات</p>
+              <p className="text-[0.72rem] text-gray-400 tracking-wide">
+                كتابات و مقالات
+              </p>
             </div>
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-0.5">
-            <Link
-              href="/"
-              className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-            >
-              الرئيسية
-            </Link>
+          <nav
+            className="hidden md:flex items-stretch self-stretch"
+            aria-label="القائمة الرئيسية"
+          >
+            <HeaderLink href="/" label="الرئيسية" />
             <MegaMenu
               axes={axes}
               series={series}
               years={years}
               publishers={publishers}
             />
-            {TOP_LEVEL_LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"
-              >
-                {link.label}
-              </Link>
-            ))}
+            <HeaderLink href="/books" label="الكتب" matchDescendants />
+            <HeaderLink href="/about" label="عن الدكتور" matchDescendants />
           </nav>
 
-          {/* Desktop search + social icons */}
-          <div className="hidden md:flex items-center gap-1">
+          {/* Search (desktop) */}
+          <div className="hidden md:flex items-center shrink-0">
             <SearchIconLink />
-            <div className="w-px h-5 bg-gray-200 mx-1" />
-            <SocialLinks />
           </div>
 
           {/* Mobile menu */}

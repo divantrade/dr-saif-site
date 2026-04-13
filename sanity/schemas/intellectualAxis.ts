@@ -66,16 +66,17 @@ export const intellectualAxis = defineType({
       type: "string",
       options: {
         list: [
-          { title: "زمرّدي", value: "emerald" },
-          { title: "نيلي", value: "indigo" },
-          { title: "كهرماني", value: "amber" },
-          { title: "قرمزي", value: "rose" },
-          { title: "فيروزي", value: "teal" },
-          { title: "أرجواني", value: "violet" },
-          { title: "نحاسي", value: "orange" },
+          { title: "زمرّدي (أخضر)", value: "emerald" },
+          { title: "سماوي (أزرق)", value: "sky" },
+          { title: "بنفسجي", value: "violet" },
+          { title: "أحمر", value: "red" },
+          { title: "كهرماني (ذهبي)", value: "amber" },
+          { title: "برتقالي", value: "orange" },
+          { title: "ليموني (زيتوني)", value: "lime" },
         ],
       },
-      description: "يُستخدم لتمييز بصري في القوائم و البطاقات.",
+      description:
+        "يُستخدم كعلامة بصرية للمحور في القوائم و البطاقات. يتطابق مع لوحة الألوان السبعة.",
     }),
     defineField({
       name: "icon",
