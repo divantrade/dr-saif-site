@@ -7,6 +7,7 @@ import type {
   YearSummary,
   WPPost,
   HomePost,
+  BookSummary,
 } from "./types";
 
 // ─── Constants ──────────────────────────────────────────────────────────────
@@ -372,6 +373,205 @@ export async function getArchiveCredits(): Promise<{
     },
     { next: { revalidate: 1800, tags: ["posts", "categories"] } }
   );
+}
+
+// ─── Books ──────────────────────────────────────────────────────────────────
+
+/**
+ * Foundational titles of the intellectual project. Used as a fallback
+ * when the `book` content type in Sanity is still empty — so the
+ * homepage section never renders blank. Once an editor adds real `book`
+ * documents, those take over automatically.
+ *
+ * Axis mapping mirrors the BOOK ↔ AXIS pairing in the brief:
+ *   1 التأسيس الحضاري, 2 التراث, 3 النهوض, 4 الاستبداد,
+ *   5 المواطنة, 6 الثورات, 7 المقاومة.
+ */
+const FALLBACK_BOOKS: BookSummary[] = [
+  {
+    _id: "fallback-book-1",
+    title: "النظرية السياسية من منظور حضاري إسلامي",
+    subtitle: null,
+    slug: null,
+    year: 2002,
+    publisher: "المعهد العالمي للفكر الإسلامي",
+    cover: null,
+    coverAlt: null,
+    description:
+      "تأسيس منهجي لعلم السياسة من مرجعية حضارية إسلامية، يَبني مفرداته ومفاهيمه على الكتاب والسنة والخبرة التاريخية للأمّة.",
+    axisNumber: 1,
+    axisName: "التأسيس الحضاري",
+    axisSlug: null,
+    axisColor: "emerald",
+    externalUrl: null,
+    isFallback: true,
+  },
+  {
+    _id: "fallback-book-2",
+    title: "الزحف غير المقدَّس: تأميم الدولة للدين",
+    subtitle: null,
+    slug: null,
+    year: 2016,
+    publisher: null,
+    cover: null,
+    coverAlt: null,
+    description:
+      "قراءة في توظيف السلطة للمؤسّسة الدينية وتحويلها إلى أداة في يد الاستبداد، وتفكيك هذا النمط من منظور مقاصدي.",
+    axisNumber: 4,
+    axisName: "الاستبداد ومقاومته",
+    axisSlug: null,
+    axisColor: "red",
+    externalUrl: null,
+    isFallback: true,
+  },
+  {
+    _id: "fallback-book-3",
+    title: "العولمة والإسلام: رؤيتان للعالم",
+    subtitle: null,
+    slug: null,
+    year: 2009,
+    publisher: null,
+    cover: null,
+    coverAlt: null,
+    description:
+      "مقاربة بين رؤيتين متضادّتين للعالَم: رؤية عولمة بلا مرجعية، ورؤية إسلامية تَصْدُر عن كلّيات الوحي وسُنن التدافع.",
+    axisNumber: 5,
+    axisName: "المواطنة والدولة",
+    axisSlug: null,
+    axisColor: "amber",
+    externalUrl: null,
+    isFallback: true,
+  },
+  {
+    _id: "fallback-book-4",
+    title: "المشروع الحضاري الإسلامي للتغيير",
+    subtitle: "سيرة ومسيرة",
+    slug: null,
+    year: 2013,
+    publisher: null,
+    cover: null,
+    coverAlt: null,
+    description:
+      "معالم مشروع حضاري متكامل في التغيير والنهوض، يقرأ التجربة ويستخلص قواعد العمل والمسيرة.",
+    axisNumber: 3,
+    axisName: "النهوض والإصلاح",
+    axisSlug: null,
+    axisColor: "violet",
+    externalUrl: null,
+    isFallback: true,
+  },
+  {
+    _id: "fallback-book-5",
+    title: "فتاوى الأمّة وأصول الفقه الحضاري",
+    subtitle: null,
+    slug: null,
+    year: null,
+    publisher: null,
+    cover: null,
+    coverAlt: null,
+    description:
+      "اجتهاد في أصول الفقه الحضاري عبر فقه الأمّة لا فقه الفرد — مدخل لقراءة مستأنفة لنصوص الوحي في ضوء الواقع.",
+    axisNumber: 1,
+    axisName: "التأسيس الحضاري",
+    axisSlug: null,
+    axisColor: "emerald",
+    externalUrl: null,
+    isFallback: true,
+  },
+  {
+    _id: "fallback-book-6",
+    title: "المداخل المنهاجية للبحث في العلاقات الدولية في الإسلام",
+    subtitle: null,
+    slug: null,
+    year: 1996,
+    publisher: "المعهد العالمي للفكر الإسلامي",
+    cover: null,
+    coverAlt: null,
+    description:
+      "تأصيل منهجي لدراسة العلاقات الدولية من المرجعية الإسلامية — الإطار والموضوع والمنهج وحدود القول المعرفي.",
+    axisNumber: 5,
+    axisName: "المواطنة والدولة",
+    axisSlug: null,
+    axisColor: "amber",
+    externalUrl: null,
+    isFallback: true,
+  },
+  {
+    _id: "fallback-book-7",
+    title: "العلاقات الدولية في الإسلام — مدخل القيم",
+    subtitle: "إطار مرجعي لدراسة العلاقات الدولية",
+    slug: null,
+    year: 1999,
+    publisher: "المعهد العالمي للفكر الإسلامي",
+    cover: null,
+    coverAlt: null,
+    description:
+      "القيم الإسلامية أطراً مرجعية لدراسة العلاقات الدولية: العدل والشورى والكرامة والسلم — أساس التنظير لا زينة له.",
+    axisNumber: 5,
+    axisName: "المواطنة والدولة",
+    axisSlug: null,
+    axisColor: "amber",
+    externalUrl: null,
+    isFallback: true,
+  },
+];
+
+const BOOK_FIELDS = `
+  _id,
+  title,
+  subtitle,
+  "slug": slug.current,
+  year,
+  publisher,
+  cover,
+  "coverAlt": cover.alt,
+  description,
+  displayOrder,
+  featured,
+  externalUrl,
+  "axisNumber": axis->axisNumber,
+  "axisName": axis->name,
+  "axisSlug": axis->slug.current,
+  "axisColor": axis->color
+`;
+
+/**
+ * Fetch featured books from Sanity. Returns the hardcoded foundational
+ * titles when Sanity has no `book` documents yet, so the homepage
+ * section always has something meaningful to render.
+ */
+export async function getFeaturedBooks(): Promise<BookSummary[]> {
+  const rows = await sanityClient.fetch<
+    Omit<BookSummary, "isFallback">[]
+  >(
+    `*[_type == "book" && coalesce(featured, true)]
+       | order(coalesce(displayOrder, 999) asc, year desc) {
+         ${BOOK_FIELDS}
+       }`,
+    {},
+    { next: { revalidate: 600, tags: ["books"] } }
+  );
+  if (rows.length === 0) return FALLBACK_BOOKS;
+  return rows.map((r) => ({ ...r, isFallback: false }));
+}
+
+/**
+ * Full book catalogue for the dedicated `/books` page. Falls back to
+ * the foundational list for the same reason as the homepage helper.
+ */
+export async function getAllBooks(): Promise<BookSummary[]> {
+  const rows = await sanityClient.fetch<
+    Omit<BookSummary, "isFallback">[]
+  >(
+    `*[_type == "book"]
+       | order(coalesce(displayOrder, 999) asc, year desc) {
+         ${BOOK_FIELDS}
+       }`,
+    {},
+    { next: { revalidate: 600, tags: ["books"] } }
+  );
+  if (rows.length === 0) return FALLBACK_BOOKS;
+  return rows.map((r) => ({ ...r, isFallback: false }));
 }
 
 /**

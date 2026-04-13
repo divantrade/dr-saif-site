@@ -26,14 +26,14 @@ export default function AxesShowcase({ axes }: Props) {
         {/* Section header */}
         <div className="max-w-3xl mb-14 md:mb-16">
           <div className="flex items-center gap-3 mb-5 text-emerald-800">
-            <span className="font-display text-sm tabular-nums">٠١</span>
+            <span className="font-display text-sm tabular-nums">٠٢</span>
             <span className="h-px w-12 bg-emerald-700/30" />
             <span className="text-[11px] tracking-[0.35em] uppercase">
-              المشروع الفكري
+              المحاور الفكريّة
             </span>
           </div>
           <h2 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold text-stone-900 leading-[1.05] mb-5">
-            سبعة محاور — قراءة واحدة
+            المشروع الفكري
           </h2>
           <p className="text-base md:text-lg text-stone-600 leading-[2] max-w-2xl">
             سبعة محاور تتقاطع و تتكامل — من التأسيس المنهجي إلى المقاومة

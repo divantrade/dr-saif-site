@@ -4,6 +4,7 @@ import Quotes from "@/components/Quotes";
 import StatsStrip from "@/components/StatsStrip";
 import SanityPostCard from "@/components/SanityPostCard";
 import AxesShowcase from "@/components/AxesShowcase";
+import BooksShowcase from "@/components/BooksShowcase";
 import FeaturedSeries from "@/components/FeaturedSeries";
 import ArchiveShortcut from "@/components/ArchiveShortcut";
 import {
@@ -14,6 +15,7 @@ import {
   getLatestPostPerAxis,
   getPublishedPostCount,
   getArchiveCredits,
+  getFeaturedBooks,
 } from "@/lib/sanity-data";
 
 export default async function HomePage() {
@@ -25,6 +27,7 @@ export default async function HomePage() {
     feedByAxis,
     totalPosts,
     credits,
+    books,
   ] = await Promise.all([
     getAxes(),
     getSeriesList(),
@@ -33,6 +36,7 @@ export default async function HomePage() {
     getLatestPostPerAxis(),
     getPublishedPostCount(),
     getArchiveCredits(),
+    getFeaturedBooks(),
   ]);
 
   // One recent post per axis — filter out axes without any posts yet.
@@ -55,22 +59,25 @@ export default async function HomePage() {
     <>
       <Hero />
 
-      {/* ٠١ · المشروع الفكري */}
-      <AxesShowcase axes={axes} />
-
-      {/* ─── Stats strip — placed between the axes and the feed so the
-          scale of the archive lands right as the reader is about to
-          scan the most recent writing. */}
+      {/* ─── Stats strip — placed right after the hero so the scale of the
+          archive lands before the reader enters the "المشروع في كتب"
+          section. */}
       <StatsStrip stats={stats} />
 
-      {/* ٠٢ · مختارات — مقال حديث من كل محور */}
+      {/* ٠١ · المشروع في كتب — foundational books of the project */}
+      <BooksShowcase books={books} />
+
+      {/* ٠٢ · المشروع الفكري */}
+      <AxesShowcase axes={axes} />
+
+      {/* ٠٣ · مختارات — مقال حديث من كل محور */}
       {axisPosts.length > 0 && (
         <section className="relative bg-stone-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-24">
             <div className="flex items-end justify-between gap-6 mb-10">
               <div className="max-w-2xl">
                 <div className="flex items-center gap-3 mb-4 text-emerald-800">
-                  <span className="font-display text-sm tabular-nums">٠٢</span>
+                  <span className="font-display text-sm tabular-nums">٠٣</span>
                   <span className="h-px w-12 bg-emerald-700/30" />
                   <span className="text-[11px] tracking-[0.35em] uppercase">
                     مختارات
@@ -137,13 +144,13 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* ٠٣ · السلاسل المقاليّة */}
+      {/* ٠٤ · السلاسل المقاليّة */}
       <FeaturedSeries series={series} axes={axes} />
 
-      {/* ٠٤ · من كلامه */}
+      {/* ٠٥ · من كلامه */}
       <Quotes />
 
-      {/* ٠٥ · الأرشيف */}
+      {/* ٠٦ · الأرشيف */}
       <ArchiveShortcut years={years} publishers={publishers} />
 
       {/* Waqf al-Qalam CTA */}
