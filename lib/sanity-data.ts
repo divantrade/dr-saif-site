@@ -1,0 +1,251 @@
+import "server-only";
+import { sanityClient } from "@/sanity/client";
+import type {
+  AxisSummary,
+  SeriesSummary,
+  PublisherSummary,
+  YearSummary,
+  WPPost,
+} from "./types";
+
+// ─── Constants ──────────────────────────────────────────────────────────────
+
+/** Legacy WP id of the المقالات root category — its direct children are the
+ *  publisher-level taxonomy ("مقالات عربي 21", "مقالات العربي الجديد", …).
+ *  We surface these in the "أرشيف → حسب منصة النشر" menu. */
+const ARTICLES_ROOT_LEGACY_ID = 42;
+
+// ─── Axis helpers ───────────────────────────────────────────────────────────
+
+const AXIS_FIELDS = `
+  _id,
+  axisNumber,
+  name,
+  shortName,
+  "slug": slug.current,
+  tagline,
+  description,
+  color,
+  icon,
+  "postCount": count(*[_type == "post" && references(^._id)])
+`;
+
+export async function getAxes(): Promise<AxisSummary[]> {
+  return sanityClient.fetch<AxisSummary[]>(
+    `*[_type == "intellectualAxis"] | order(axisNumber asc) { ${AXIS_FIELDS} }`,
+    {},
+    { next: { revalidate: 600, tags: ["axes"] } }
+  );
+}
+
+export async function getAxisBySlug(
+  slug: string
+): Promise<AxisSummary | null> {
+  return sanityClient.fetch<AxisSummary | null>(
+    `*[_type == "intellectualAxis" && slug.current == $slug][0] { ${AXIS_FIELDS} }`,
+    { slug },
+    { next: { revalidate: 600, tags: ["axes", `axis:${slug}`] } }
+  );
+}
+
+// ─── Series helpers ─────────────────────────────────────────────────────────
+
+const SERIES_FIELDS = `
+  _id,
+  name,
+  "slug": slug.current,
+  tagline,
+  description,
+  displayOrder,
+  featured,
+  "axisNumber": axis->axisNumber,
+  "axisSlug": axis->slug.current,
+  "axisName": axis->name,
+  "postCount": count(*[_type == "post" && references(^._id)])
+`;
+
+export async function getSeriesList(): Promise<SeriesSummary[]> {
+  return sanityClient.fetch<SeriesSummary[]>(
+    `*[_type == "series"] | order(coalesce(displayOrder, 999) asc, name asc) {
+       ${SERIES_FIELDS}
+     }`,
+    {},
+    { next: { revalidate: 600, tags: ["series"] } }
+  );
+}
+
+export async function getSeriesBySlug(
+  slug: string
+): Promise<SeriesSummary | null> {
+  return sanityClient.fetch<SeriesSummary | null>(
+    `*[_type == "series" && slug.current == $slug][0] { ${SERIES_FIELDS} }`,
+    { slug },
+    { next: { revalidate: 600, tags: ["series", `series:${slug}`] } }
+  );
+}
+
+// ─── Post lookups (Sanity-backed, returned in WPPost shape) ────────────────
+// We re-shape Sanity docs into the WPPost shape that the existing UI
+// components (PostCard, etc.) already consume — so the same components
+// render axis/series pages without any modification.
+
+const POST_AS_WP_SHAPE = `
+  "id": legacyId,
+  "date": publishedAt,
+  "date_gmt": publishedAt,
+  "slug": slug.current,
+  "status": "publish",
+  "link": "/blog/" + slug.current,
+  "title": { "rendered": title },
+  "content": { "rendered": coalesce(rawHtml, "") },
+  "excerpt": { "rendered": coalesce(excerpt, "") },
+  "author": 1,
+  "featured_media": 0,
+  "sticky": coalesce(sticky, false),
+  "categories": [],
+  "tags": []
+`;
+
+interface Paginated {
+  posts: WPPost[];
+  totalPages: number;
+  currentPage: number;
+  total: number;
+}
+
+async function paginatedFetch(
+  filter: string,
+  params: Record<string, unknown>,
+  page: number,
+  perPage: number,
+  cacheTags: string[]
+): Promise<Paginated> {
+  const start = (page - 1) * perPage;
+  const end = start + perPage;
+  const data = await sanityClient.fetch<{ total: number; posts: WPPost[] }>(
+    `{
+       "total": count(*[_type == "post" && ${filter}]),
+       "posts": *[_type == "post" && ${filter}]
+                  | order(publishedAt desc)
+                  [$start...$end] { ${POST_AS_WP_SHAPE} }
+     }`,
+    { ...params, start, end },
+    { next: { revalidate: 600, tags: cacheTags } }
+  );
+  return {
+    posts: data.posts,
+    total: data.total,
+    totalPages: Math.max(1, Math.ceil(data.total / perPage)),
+    currentPage: page,
+  };
+}
+
+export async function getPaginatedPostsByAxisSlug(
+  slug: string,
+  page: number,
+  perPage = 12
+): Promise<Paginated> {
+  return paginatedFetch(
+    `axis->slug.current == $slug`,
+    { slug },
+    page,
+    perPage,
+    ["axes", `axis:${slug}`, "posts"]
+  );
+}
+
+export async function getPostsBySeriesSlug(
+  slug: string
+): Promise<WPPost[]> {
+  // Series pages list every episode in order; usually < 100 → no pagination.
+  return sanityClient.fetch<WPPost[]>(
+    `*[_type == "post" && series->slug.current == $slug]
+       | order(coalesce(seriesNumber, 9999) asc, publishedAt asc) {
+         ${POST_AS_WP_SHAPE},
+         "seriesNumber": seriesNumber
+       }`,
+    { slug },
+    { next: { revalidate: 600, tags: ["series", `series:${slug}`, "posts"] } }
+  );
+}
+
+// ─── Archive: years ─────────────────────────────────────────────────────────
+
+export async function getPostYears(): Promise<YearSummary[]> {
+  // Group by year via GROQ projection. Sanity has no GROUP BY, so we project
+  // year strings then aggregate in JS. The post set is small (~1.2k) so this
+  // is cheap.
+  const rows = await sanityClient.fetch<{ year: number }[]>(
+    `*[_type == "post" && defined(publishedAt)] {
+       "year": dateTime(publishedAt) | string::split("-")[0]
+     }`,
+    {},
+    { next: { revalidate: 1800, tags: ["posts", "archive"] } }
+  );
+  const counts = new Map<number, number>();
+  for (const r of rows) {
+    const y = Number(r.year);
+    if (!Number.isFinite(y)) continue;
+    counts.set(y, (counts.get(y) ?? 0) + 1);
+  }
+  return Array.from(counts.entries())
+    .map(([year, count]) => ({ year, count }))
+    .sort((a, b) => b.year - a.year);
+}
+
+export async function getPaginatedPostsByYear(
+  year: number,
+  page: number,
+  perPage = 12
+): Promise<Paginated> {
+  const start = `${year}-01-01T00:00:00Z`;
+  const end = `${year + 1}-01-01T00:00:00Z`;
+  return paginatedFetch(
+    `publishedAt >= $start && publishedAt < $end`,
+    { start, end },
+    page,
+    perPage,
+    ["posts", `year:${year}`]
+  );
+}
+
+// ─── Archive: publishers (legacy WP publisher categories) ───────────────────
+
+export async function getPublishers(): Promise<PublisherSummary[]> {
+  // The publisher-level taxonomy in WordPress was children of "المقالات"
+  // (legacyId=42). We surface them under "أرشيف → حسب منصة النشر".
+  const rows = await sanityClient.fetch<
+    { name: string; slug: string; count: number }[]
+  >(
+    `*[_type == "category" && parent->legacyId == $rootId] {
+       name,
+       "slug": slug.current,
+       "count": count(*[_type == "post" && references(^._id)])
+     } | order(count desc)`,
+    { rootId: ARTICLES_ROOT_LEGACY_ID },
+    { next: { revalidate: 1800, tags: ["categories", "archive"] } }
+  );
+  // Hide empty publisher entries from the menu (would 404).
+  return rows.filter((r) => r.count > 0);
+}
+
+// ─── Composite navigation payload ───────────────────────────────────────────
+// One round-trip helper used by the Header / MobileNav so the menu renders
+// in a single fetch instead of three.
+
+export interface NavData {
+  axes: AxisSummary[];
+  series: SeriesSummary[];
+  years: YearSummary[];
+  publishers: PublisherSummary[];
+}
+
+export async function getNavData(): Promise<NavData> {
+  const [axes, series, years, publishers] = await Promise.all([
+    getAxes(),
+    getSeriesList(),
+    getPostYears(),
+    getPublishers(),
+  ]);
+  return { axes, series, years, publishers };
+}

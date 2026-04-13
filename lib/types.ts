@@ -88,3 +88,56 @@ export function formatDate(dateStr: string): string {
 export function categoryHref(slug: string): string {
   return `/category/${encodeURIComponent(readableSlug(slug))}`;
 }
+
+// ─── New thematic taxonomy (Sanity-native) ──────────────────────────────────
+
+export interface AxisSummary {
+  _id: string;
+  axisNumber: number;
+  name: string;
+  shortName: string | null;
+  slug: string;
+  tagline: string | null;
+  description: string | null;
+  color: string | null;
+  icon: string | null;
+  postCount: number;
+}
+
+export interface SeriesSummary {
+  _id: string;
+  name: string;
+  slug: string;
+  tagline: string | null;
+  description: string | null;
+  axisNumber: number;
+  axisSlug: string;
+  axisName: string;
+  displayOrder: number | null;
+  featured: boolean;
+  postCount: number;
+}
+
+export interface PublisherSummary {
+  /** Old WP category slug (preserved — feeds /category/[slug]) */
+  slug: string;
+  name: string;
+  count: number;
+}
+
+export interface YearSummary {
+  year: number;
+  count: number;
+}
+
+export function axisHref(slug: string): string {
+  return `/axis/${encodeURIComponent(readableSlug(slug))}`;
+}
+
+export function seriesHref(slug: string): string {
+  return `/series/${encodeURIComponent(readableSlug(slug))}`;
+}
+
+export function yearHref(year: number): string {
+  return `/archive/year/${year}`;
+}
