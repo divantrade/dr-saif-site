@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import PostCard from "@/components/PostCard";
+import SanityPostCard from "@/components/SanityPostCard";
 import Pagination from "@/components/Pagination";
 import { getPaginatedPostsByYear, getPostYears } from "@/lib/sanity-data";
 import { yearHref } from "@/lib/types";
@@ -81,7 +81,7 @@ export default async function YearArchivePage({
         <>
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mb-12">
             {posts.map((post) => (
-              <PostCard key={post.id} post={post} />
+              <SanityPostCard key={post._id} post={post} />
             ))}
           </div>
           <Pagination

@@ -5,7 +5,6 @@ import type {
   SeriesSummary,
   PublisherSummary,
   YearSummary,
-  WPPost,
   HomePost,
   BookSummary,
 } from "./types";
@@ -86,30 +85,38 @@ export async function getSeriesBySlug(
   );
 }
 
-// ─── Post lookups (Sanity-backed, returned in WPPost shape) ────────────────
-// We re-shape Sanity docs into the WPPost shape that the existing UI
-// components (PostCard, etc.) already consume — so the same components
-// render axis/series pages without any modification.
+// ─── Post lookups (Sanity-native HomePost shape) ───────────────────────────
+// Axis / year / series listings now return the HomePost shape so the UI
+// can use the shared `SanityPostCard` component — which reads the
+// `featuredImage` Sanity asset directly. This replaces an older shim
+// that re-shaped posts as WPPost with `featured_media: 0`, which left
+// the thumbnail empty on every listing page.
 
-const POST_AS_WP_SHAPE = `
-  "id": legacyId,
-  "date": publishedAt,
-  "date_gmt": publishedAt,
+const POST_AS_HOME_POST = `
+  _id,
+  title,
   "slug": slug.current,
-  "status": "publish",
-  "link": "/blog/" + slug.current,
-  "title": { "rendered": title },
-  "content": { "rendered": coalesce(rawHtml, "") },
-  "excerpt": { "rendered": coalesce(excerpt, "") },
-  "author": 1,
-  "featured_media": 0,
+  "excerpt": coalesce(excerpt, ""),
+  publishedAt,
   "sticky": coalesce(sticky, false),
-  "categories": [],
-  "tags": []
+  featuredImage,
+  "imageAlt": featuredImage.alt,
+  "axis": axis-> {
+    name,
+    shortName,
+    "slug": slug.current,
+    color,
+    axisNumber
+  },
+  "series": series-> {
+    name,
+    "slug": slug.current
+  },
+  seriesNumber
 `;
 
 interface Paginated {
-  posts: WPPost[];
+  posts: HomePost[];
   totalPages: number;
   currentPage: number;
   total: number;
@@ -128,12 +135,12 @@ async function paginatedFetch(
   // into the query string. Keeping them out of `params` prevents
   // accidental clashes with the caller's own filter parameters (e.g.
   // getPaginatedPostsByYear uses $start / $end for the date range).
-  const data = await sanityClient.fetch<{ total: number; posts: WPPost[] }>(
+  const data = await sanityClient.fetch<{ total: number; posts: HomePost[] }>(
     `{
        "total": count(*[_type == "post" && ${filter}]),
        "posts": *[_type == "post" && ${filter}]
                   | order(publishedAt desc)
-                  [${offset}...${limit}] { ${POST_AS_WP_SHAPE} }
+                  [${offset}...${limit}] { ${POST_AS_HOME_POST} }
      }`,
     params,
     { next: { revalidate: 600, tags: cacheTags } }
@@ -160,13 +167,13 @@ export async function getPaginatedPostsByAxisSlug(
   const limit = offset + perPage;
   const result = await sanityClient.fetch<{
     total: number;
-    posts: WPPost[];
+    posts: HomePost[];
   } | null>(
     `*[_type == "intellectualAxis" && slug.current == $slug][0] {
        "total": count(*[_type == "post" && references(^._id)]),
        "posts": *[_type == "post" && references(^._id)]
          | order(publishedAt desc)
-         [${offset}...${limit}] { ${POST_AS_WP_SHAPE} }
+         [${offset}...${limit}] { ${POST_AS_HOME_POST} }
      }`,
     { slug },
     {
@@ -187,17 +194,16 @@ export async function getPaginatedPostsByAxisSlug(
 
 export async function getPostsBySeriesSlug(
   slug: string
-): Promise<WPPost[]> {
+): Promise<HomePost[]> {
   // Mirrors `postCount` in getSeriesList — project from the series document
   // and count/fetch posts that `references(^._id)`. This is more reliable
   // than filtering posts via `series->slug.current == $slug` because it
   // avoids the reverse-dereference entirely.
-  const result = await sanityClient.fetch<{ episodes: WPPost[] } | null>(
+  const result = await sanityClient.fetch<{ episodes: HomePost[] } | null>(
     `*[_type == "series" && slug.current == $slug][0] {
        "episodes": *[_type == "post" && references(^._id)]
          | order(coalesce(seriesNumber, 9999) asc, publishedAt asc) {
-           ${POST_AS_WP_SHAPE},
-           "seriesNumber": seriesNumber
+           ${POST_AS_HOME_POST}
          }
      }`,
     { slug },
