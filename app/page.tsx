@@ -1,6 +1,5 @@
 import Link from "next/link";
 import Hero from "@/components/Hero";
-import Quotes from "@/components/Quotes";
 import StatsStrip from "@/components/StatsStrip";
 import SanityPostCard from "@/components/SanityPostCard";
 import AxesShowcase from "@/components/AxesShowcase";
@@ -147,10 +146,8 @@ export default async function HomePage() {
       {/* ٠٤ · السلاسل المقاليّة */}
       <FeaturedSeries series={series} axes={axes} />
 
-      {/* ٠٥ · من كلامه */}
-      <Quotes />
-
-      {/* ٠٦ · الأرشيف */}
+      {/* ٠٥ · الأرشيف — the dedicated "من كلامه" section is gone;
+          the quote strip in the hero now fills that role. */}
       <ArchiveShortcut years={years} publishers={publishers} />
 
       {/* Waqf al-Qalam CTA */}
