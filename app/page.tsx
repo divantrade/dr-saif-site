@@ -10,82 +10,50 @@ import {
   getSeriesList,
   getPostYears,
   getPublishers,
-  getHomeFeed,
+  getLatestPostPerAxis,
   getPublishedPostCount,
 } from "@/lib/sanity-data";
-
-/**
- * Short epigraphs rotated through the hero with each render (via ISR).
- * Hand-picked to span different facets of the intellectual project.
- */
-const HERO_EPIGRAPHS: { text: string; source: string }[] = [
-  {
-    text:
-      "المنظور الحضاري ليس زاوية نظر فرعية، بل هو الإطار الكلّي الذي يُعيد " +
-      "ترتيب السؤال قبل أن يجترح الجواب.",
-    source: "في المنظور الحضاري الإسلامي",
-  },
-  {
-    text: "إن هذه الأمة تحتاج إلى عقل استراتيجي يجمع بين الإرادة والإدارة.",
-    source: "عقل استراتيجي والتغير القادم",
-  },
-  {
-    text: "لا تنهض الأمم بالردّ على خصومها، بل بتجديد وعيها بذاتها.",
-    source: "مشاتل التغيير",
-  },
-];
-
-// Deterministic day-of-year index so the epigraph rotation is stable
-// within a given ISR window.
-function epigraphOfTheDay(): { text: string; source: string } {
-  const utcDay = Math.floor(
-    new Date().setUTCHours(0, 0, 0, 0) / (1000 * 60 * 60 * 24)
-  );
-  return HERO_EPIGRAPHS[utcDay % HERO_EPIGRAPHS.length];
-}
 
 const toArabic = (n: number) => n.toLocaleString("ar-EG");
 
 export default async function HomePage() {
-  const [axes, series, years, publishers, feed, totalPosts] = await Promise.all(
-    [
+  const [axes, series, years, publishers, feedByAxis, totalPosts] =
+    await Promise.all([
       getAxes(),
       getSeriesList(),
       getPostYears(),
       getPublishers(),
-      getHomeFeed(7), // 1 featured + 6 grid
+      getLatestPostPerAxis(),
       getPublishedPostCount(),
-    ]
-  );
+    ]);
 
-  const [featured, ...latest] = feed;
+  // One recent post per axis — filter out axes without any posts yet.
+  const axisPosts = feedByAxis
+    .filter((x) => x.post)
+    .map((x) => x.post!) // non-null asserted after filter
+    .slice(0, 7);
+
   const yearRange =
     years.length > 0
-      ? `${years[years.length - 1].year}–${years[0].year}`
+      ? `${toArabic(years[years.length - 1].year)}–${toArabic(years[0].year)}`
       : "";
 
   const heroStats = [
     { value: toArabic(totalPosts), label: "مقالاً منشوراً" },
     { value: "٧", label: "محاور فكرية" },
     { value: toArabic(series.length), label: "سلاسل مقاليّة" },
-    { value: yearRange || "+٤٠", label: "سنة من الإنتاج" },
+    { value: yearRange, label: "سنوات الأرشيف" },
   ];
-
-  const epigraph = epigraphOfTheDay();
 
   return (
     <>
-      <Hero
-        stats={heroStats}
-        epigraph={epigraph.text}
-        epigraphSource={epigraph.source}
-      />
+      <Hero stats={heroStats} />
 
-      {/* ٠١ · المشروع الفكري — flagship section */}
+      {/* ٠١ · المشروع الفكري */}
       <AxesShowcase axes={axes} />
 
-      {/* ٠٢ · المقال المميَّز */}
-      {featured && (
+      {/* ٠٢ · مختارات — مقال حديث من كل محور */}
+      {axisPosts.length > 0 && (
         <section className="relative bg-stone-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 py-20 md:py-24">
             <div className="flex items-end justify-between gap-6 mb-10">
@@ -94,18 +62,22 @@ export default async function HomePage() {
                   <span className="font-display text-sm tabular-nums">٠٢</span>
                   <span className="h-px w-12 bg-emerald-700/30" />
                   <span className="text-[11px] tracking-[0.35em] uppercase">
-                    اقرأ اليوم
+                    مختارات
                   </span>
                 </div>
-                <h2 className="font-display text-4xl md:text-5xl font-bold text-stone-900 leading-[1.05]">
-                  المقال المميَّز
+                <h2 className="font-display text-4xl md:text-5xl font-bold text-stone-900 leading-[1.05] mb-4">
+                  من أحدث ما كُتب
                 </h2>
+                <p className="text-base md:text-lg text-stone-600 leading-[2]">
+                  كتابة حديثة من كلّ محور — بوّابة للدخول إلى المشروع
+                  الفكري من الزاوية التي تناسب سؤالك.
+                </p>
               </div>
               <Link
                 href="/blog"
                 className="hidden md:inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-800 hover:text-emerald-950 border-b border-emerald-700/30 hover:border-emerald-700 pb-0.5 transition-colors shrink-0"
               >
-                كل المقالات
+                كل الكتابات
                 <svg
                   className="w-3.5 h-3.5"
                   fill="none"
@@ -121,24 +93,45 @@ export default async function HomePage() {
                 </svg>
               </Link>
             </div>
-            <SanityPostCard post={featured} featured />
 
-            {/* Latest grid — 6 recent posts directly below the featured */}
-            {latest.length > 0 && (
-              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 mt-10">
-                {latest.map((post) => (
-                  <SanityPostCard key={post._id} post={post} />
-                ))}
-              </div>
-            )}
+            {/* Equal 3-col grid — no "featured" hierarchy, every axis
+                gets the same weight on the page. */}
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              {axisPosts.map((post) => (
+                <SanityPostCard key={post._id} post={post} />
+              ))}
+            </div>
+
+            {/* Mobile-only "all articles" link */}
+            <div className="mt-10 md:hidden flex justify-center">
+              <Link
+                href="/blog"
+                className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-800 hover:text-emerald-950 border-b border-emerald-700/30 hover:border-emerald-700 pb-0.5 transition-colors"
+              >
+                كل الكتابات
+                <svg
+                  className="w-3.5 h-3.5"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M15 19l-7-7 7-7"
+                  />
+                </svg>
+              </Link>
+            </div>
           </div>
         </section>
       )}
 
-      {/* ٠٣ · السلاسل المميَّزة */}
+      {/* ٠٣ · السلاسل المقاليّة */}
       <FeaturedSeries series={series} axes={axes} />
 
-      {/* ٠٤ · شذرات — من كلامه */}
+      {/* ٠٤ · من كلامه */}
       <Quotes />
 
       {/* ٠٥ · الأرشيف */}
@@ -178,8 +171,9 @@ export default async function HomePage() {
               الأعمال الكاملة — وقفاً لوجه الله
             </h2>
             <p className="text-amber-50/90 text-lg leading-[2] max-w-2xl mb-8">
-              تأخذ كتابات الدكتور طريقها إلى الإتاحة المفتوحة للقارئ والباحث،
-              في عمل تراكمي يسعى لتوثيق المشروع الفكري ونشره دون حواجز.
+              تأخذ كتابات الدكتور طريقها إلى الإتاحة المفتوحة للقارئ
+              والباحث، في عمل تراكمي يسعى لتوثيق المشروع الفكري و نشره
+              دون حواجز.
             </p>
             <Link
               href="/waqf-alqalam"
