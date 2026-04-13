@@ -1,5 +1,6 @@
 import Image from "next/image";
 import SearchForm from "@/components/SearchForm";
+import AnimatedCounter from "@/components/AnimatedCounter";
 
 const DOCTOR_PORTRAIT =
   "https://www.saifabdelfattah.net/wp-content/uploads/2023/02/dr-site-m.png";
@@ -110,7 +111,7 @@ export default function Hero({ stats }: HeroProps) {
                   }`}
                 >
                   <div className="font-display text-3xl md:text-4xl text-emerald-900 tabular-nums">
-                    {stat.value}
+                    <AnimatedCounter value={stat.value} />
                   </div>
                   <div className="text-[11px] tracking-[0.3em] uppercase text-stone-500">
                     {stat.label}

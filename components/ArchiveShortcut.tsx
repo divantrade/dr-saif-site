@@ -51,12 +51,12 @@ export default function ArchiveShortcut({ years, publishers }: Props) {
                 <li key={y.year}>
                   <Link
                     href={yearHref(y.year)}
-                    className="group flex flex-col items-center justify-center py-4 rounded-xl border border-stone-100 bg-stone-50/50 hover:bg-emerald-50 hover:border-emerald-200 transition-all"
+                    className="group flex flex-col items-center justify-center py-4 rounded-xl border border-stone-100 bg-stone-50/50 hover:bg-emerald-50 hover:border-emerald-300 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
                   >
-                    <span className="font-display text-xl font-bold text-stone-900 tabular-nums group-hover:text-emerald-800">
+                    <span className="font-display text-xl font-bold text-stone-900 tabular-nums group-hover:text-emerald-900 transition-colors">
                       {y.year}
                     </span>
-                    <span className="text-[10px] tracking-wider text-stone-400 tabular-nums mt-1">
+                    <span className="text-[10px] tracking-wider text-stone-500 tabular-nums mt-1 group-hover:text-emerald-700 transition-colors">
                       {y.count.toLocaleString("ar-EG")} مقال
                     </span>
                   </Link>
@@ -80,12 +80,12 @@ export default function ArchiveShortcut({ years, publishers }: Props) {
                 <li key={p.slug}>
                   <Link
                     href={categoryHref(p.slug)}
-                    className="group flex items-baseline justify-between gap-3 px-5 py-3.5 rounded-xl border border-stone-100 bg-stone-50/50 hover:bg-emerald-50 hover:border-emerald-200 transition-all"
+                    className="group flex items-baseline justify-between gap-3 px-5 py-3.5 rounded-xl border border-stone-100 bg-stone-50/50 hover:bg-emerald-50 hover:border-emerald-300 hover:translate-x-1 transition-all duration-200"
                   >
-                    <span className="font-medium text-stone-800 group-hover:text-emerald-800 transition-colors">
+                    <span className="font-medium text-stone-800 group-hover:text-emerald-900 transition-colors">
                       {p.name}
                     </span>
-                    <span className="text-xs text-stone-400 tabular-nums group-hover:text-emerald-700">
+                    <span className="text-xs text-stone-500 tabular-nums group-hover:text-emerald-700 transition-colors">
                       {p.count.toLocaleString("ar-EG")} مقال
                     </span>
                   </Link>
