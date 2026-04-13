@@ -149,28 +149,59 @@ export async function getPaginatedPostsByAxisSlug(
   page: number,
   perPage = 12
 ): Promise<Paginated> {
-  return paginatedFetch(
-    `axis->slug.current == $slug`,
+  // Use the projection-from-target pattern instead of post-side dereference
+  // (`axis->slug.current == $slug`). The dereference works in isolation but
+  // proved unreliable on our pinned API version when combined with counts
+  // and nested projections — `references(^._id)` from the axis doc is the
+  // same pattern `getAxes().postCount` uses, and is the canonical recipe.
+  const offset = (page - 1) * perPage;
+  const limit = offset + perPage;
+  const result = await sanityClient.fetch<{
+    total: number;
+    posts: WPPost[];
+  } | null>(
+    `*[_type == "intellectualAxis" && slug.current == $slug][0] {
+       "total": count(*[_type == "post" && references(^._id)]),
+       "posts": *[_type == "post" && references(^._id)]
+         | order(publishedAt desc)
+         [${offset}...${limit}] { ${POST_AS_WP_SHAPE} }
+     }`,
     { slug },
-    page,
-    perPage,
-    ["axes", `axis:${slug}`, "posts"]
+    {
+      next: {
+        revalidate: 600,
+        tags: ["axes", `axis:${slug}`, "posts"],
+      },
+    }
   );
+  const total = result?.total ?? 0;
+  return {
+    posts: result?.posts ?? [],
+    total,
+    totalPages: Math.max(1, Math.ceil(total / perPage)),
+    currentPage: page,
+  };
 }
 
 export async function getPostsBySeriesSlug(
   slug: string
 ): Promise<WPPost[]> {
-  // Series pages list every episode in order; usually < 100 → no pagination.
-  return sanityClient.fetch<WPPost[]>(
-    `*[_type == "post" && series->slug.current == $slug]
-       | order(coalesce(seriesNumber, 9999) asc, publishedAt asc) {
-         ${POST_AS_WP_SHAPE},
-         "seriesNumber": seriesNumber
-       }`,
+  // Mirrors `postCount` in getSeriesList — project from the series document
+  // and count/fetch posts that `references(^._id)`. This is more reliable
+  // than filtering posts via `series->slug.current == $slug` because it
+  // avoids the reverse-dereference entirely.
+  const result = await sanityClient.fetch<{ episodes: WPPost[] } | null>(
+    `*[_type == "series" && slug.current == $slug][0] {
+       "episodes": *[_type == "post" && references(^._id)]
+         | order(coalesce(seriesNumber, 9999) asc, publishedAt asc) {
+           ${POST_AS_WP_SHAPE},
+           "seriesNumber": seriesNumber
+         }
+     }`,
     { slug },
     { next: { revalidate: 600, tags: ["series", `series:${slug}`, "posts"] } }
   );
+  return result?.episodes ?? [];
 }
 
 // ─── Archive: years ─────────────────────────────────────────────────────────
